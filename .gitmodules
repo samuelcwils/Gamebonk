@@ -1,6 +1,3 @@
-[submodule "external/sdl"]
-	path = external/sdl
-	url = https://github.com/libsdl-org/SDL
 [submodule "external/incbin"]
 	path = external/incbin
 	url = https://github.com/graphitemaster/incbin

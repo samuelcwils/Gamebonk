@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 project(SDLGameboy)
 
-find_package(SDL2 REQUIRED)
+add_subdirectory(external/sdl)
 
 include_directories(${PROJECT_NAME} 
 	${SDL2_INCLUDE_DIRS}
@@ -9,12 +9,13 @@ include_directories(${PROJECT_NAME}
 	external/incbin/
 )
 
-add_executable(SDL2Test 
+add_executable(${PROJECT_NAME}
 	src/main.cpp
 	src/bus.cpp
 	src/cart.cpp
 	src/cpu.cpp
 	src/ppu.cpp	
+	src/Emulator_SDL.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})

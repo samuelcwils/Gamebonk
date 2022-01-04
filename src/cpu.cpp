@@ -112,6 +112,7 @@
                     cycles+=8;
                     break;
                 case 0x7: //RLCA (0 0 0 A7)
+                { 
                     bool carry = (((af.bytes.a << 1) & 0xff00));
                     af.bytes.a <<= 1;
                     af.bytes.a += carry;
@@ -124,7 +125,8 @@
                     
                     pc+=1;
                     cycles+=4;
-                    break;
+                    break; 
+                }
                 case 0x8: //LD a16, SP
                     Bus->write(pc+1, sp & 0x00ff);
                     Bus->write(pc+2, (sp & 0xff00) >> 8);

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 project(SDLGameboy)
 
-add_subdirectory(external/sdl)
+find_package(SDL2 REQUIRED)
 
 include_directories(${PROJECT_NAME} 
 	${SDL2_INCLUDE_DIRS}

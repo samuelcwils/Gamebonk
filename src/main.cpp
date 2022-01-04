@@ -2,7 +2,7 @@
 #include "cart.h"
 #include "incbin.h"
 #include "Emulator_SDL.h"
-extern "C" INCBIN(Game, "tetris.gb"); 
+extern "C" INCBIN(Game, "gameboy.gb"); 
 
 int main()
 {      

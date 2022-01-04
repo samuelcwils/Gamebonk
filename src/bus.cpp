@@ -35,7 +35,7 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address < 0xff4b){
 
-        return
+        return 0;
 
     } else if(address < 0xfffe){
 

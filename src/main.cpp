@@ -1,5 +1,6 @@
 #include "bus.h"
 #include "cart.h"
+#include "cpu.h"
 #include "incbin.h"
 #include "Emulator_SDL.h"
 extern "C" INCBIN(Game, "gameboy.gb"); 
@@ -16,6 +17,10 @@ int main()
     ppu* PPU = new ppu();
 
     bus* Bus = new bus(cartridge, PPU);
+
+    cpu* CPU = new cpu(Bus);
+
+    CPU->execOP();
 
     cartridge->printCart();
 

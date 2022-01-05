@@ -20,7 +20,7 @@ cart::cart(uint8_t* rom, uint32_t romSize)
    
     switch(cartType) //no mappers yet
     {
-        case 0x01:
+        case 0x00:
             noMapperLoad();
     }
 
@@ -40,7 +40,7 @@ void cart::noMapperLoad()
         staticBank[i] = rom[i];
     }
 
-    for(int i = 0x4000; i < 0x8000; i++){
+    for(int i = 00; i < 0x4000; i++){
         variableBank[i] = rom[i];
     }
 

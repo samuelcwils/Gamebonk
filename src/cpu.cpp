@@ -155,6 +155,8 @@
                     bc.bytes.c+=1;
                     pc+=1;
                     cycles+=4;
+                    break;
+
 
 
 
@@ -172,7 +174,8 @@
 
 
             }
-        
+        break;
+
         default:
             printf("INVALID OPCODE\n");
             pc++;

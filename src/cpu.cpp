@@ -92,7 +92,7 @@
                     break;
                 case 0x4: //INC B (Z 0 H -) 
                     Zflag(bc.bytes.b, 1);
-                    af.bytes.f &= 0b01000000; //N flag
+                    af.bytes.f &= 0b10111111; //N flag
                     Hflag(bc.bytes.b, 1);
                     bc.bytes.b+=1;
                     pc+=1;
@@ -100,7 +100,7 @@
                     break;
                 case 0x5: //DEC B (Z 1 H -)
                     Zflag(bc.bytes.b, -1);
-                    af.bytes.f &= 0b01000000; //N flag
+                    af.bytes.f |= 0b01000000; //N flag
                     Hflag(bc.bytes.b, -1);
                     bc.bytes.b-=1;
                     pc+=1;
@@ -135,7 +135,7 @@
                     break;
                 case 0x9: //ADD HL, BC (- 0 H C)
                     Hflag(hl.hl, bc.bc);
-                    af.bytes.f &= 0b00000000; //N flag
+                    af.bytes.f &= 0b10111111; //N flag
                     Cflag(hl.hl, bc.bc);
                     hl.hl += bc.bc;
                     pc+=1;
@@ -151,20 +151,68 @@
                     pc+=1;
                     cycles+=4;
                     break;
-                case 0xc: //INC C
+                case 0xc: //INC C (Z 0 H -)
+                    Zflag(bc.bytes.c, 1);
+                    af.bytes.f &= 0b10111111;
+                    Hflag(bc.bytes.c, 1);
                     bc.bytes.c+=1;
                     pc+=1;
                     cycles+=4;
+                    break;
+                case 0xd: //DEC C (Z 1 H -)
+                    Zflag(bc.bytes.c, -1);
+                    af.bytes.f |= 0b01000000;
+                    Cflag(bc.bytes.c, -1);
+                    bc.bytes.c-=1;
+                    pc+=1;
+                    cycles+=4;
+                case 0xe://LD C, d8
+                    bc.bytes.c = Bus->read(pc+1);
+                    pc+=2;
+                    cycles+=4;
+                case 0xf:
+                { 
+                    bool carry = (af.bytes.a & 0x01);
+                    af.bytes.a >>= 1;
+                    af.bytes.a += (carry << 8);
+                    
+                    if(carry){
+                        af.bytes.f |= 0b00010000;
+                    } else {
+                        af.bytes.f &= 0b11101111;
+                    }                    
+                    
+                    pc+=1;
+                    cycles+=4;
+                    break; 
+                }
 
-
-
-
-
+            }
             
+            break;
+        
+        case 0x1:
+            switch(opcodeL)
+            {
+                case 0x0://STOP
+                    //TODO. Need buttons.
 
-
-
-
+                case 0x1://LD DE, d16
+                    de.bytes.d = Bus->read(pc+1);
+                    de.bytes.e = Bus->read(pc+2);
+                    pc+=3;
+                    cycles+=12;
+                    break;
+                case 0x2://LD DE, a
+                    bc.bc = af.bytes.a;
+                    pc+=1;
+                    cycles+=8;
+                case 0x3://INC BC
+                    de.de+=1;
+                    pc+=1;
+                    cycles+=8;
+                    break;
+                case 0x4://INC B
                     
 
 
@@ -172,7 +220,7 @@
 
 
             }
-        
+
         default:
             printf("INVALID OPCODE\n");
             pc++;

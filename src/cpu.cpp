@@ -59,7 +59,106 @@
         }
 
     }
+
+    void cpu::LD_d16(uint8_t &high, uint8_t &low)
+    {
+        high = Bus->read(pc+1);
+        low = Bus->read(pc+2);
+        pc+=3;
+        cycles+=12;       
+    }
+
+    void cpu::LD_d8(uint8_t &byte)
+    {
+        byte = Bus->read(pc+1);
+        pc+=2;
+        cycles+=8;
+    }
+
+    void cpu::LD_a_b(uint8_t &a, uint8_t b)
+    {
+        a = b;
+        pc+=1;
+        cycles+=4;
+    }
     
+    void cpu::LD_HL_REG(uint8_t reg)
+    {
+        Bus->write(hl.hl, reg);
+        pc+=1;
+        cycles+=2;
+    }
+
+    void cpu::ADD(uint16_t &a, uint16_t b)
+    {
+  
+        af.bytes.f &= 0b10111111; //N flag
+        Hflag(a, b);
+        Cflag(a, b);
+        a += b;
+        pc+=1;
+        cycles+=8;
+    }
+    
+    void cpu::ADD(uint8_t &a, uint8_t b)
+    {
+        Zflag(a, b);
+        af.bytes.f &= 0b10111111; //N flag
+        Hflag(a, b);
+        Cflag(a, b);
+        a += b;
+        pc+=1;
+        cycles+=8;
+    }
+
+    void cpu::INC(uint16_t &value)
+    {
+        value+=1;
+        pc+=1;
+        cycles+=8;
+    }
+
+    void cpu::INC(uint8_t &byte)
+    {
+        Zflag(byte, 1);
+        af.bytes.f &= 0b10111111; //N flag
+        Hflag(byte, 1);
+        byte+=1;
+        pc+=1;
+        cycles+=4;
+    }
+
+    void cpu::DEC(uint16_t &value)
+    {
+        value-=1;
+        pc+=1;
+        cycles+=4;
+    }
+
+    void cpu::DEC(uint8_t &byte)
+    {
+        Zflag(byte, -1);
+        af.bytes.f |= 0b01000000;
+        Cflag(byte, -1);
+        byte-=1;
+        pc+=1;
+        cycles+=4;
+    }
+
+    void cpu::LD_ADDRESS_A(uint16_t address)
+    {
+        Bus->write(address, af.bytes.a);
+        pc+=1;
+        cycles+=8;
+    }
+
+        void cpu::LD_A_ADDRESS(uint16_t address)
+    {
+        af.bytes.a = Bus->read(address);
+        pc+=1;
+        cycles+=8;
+    }
+
     void cpu::execOP()
     {
         uint8_t opcode = Bus->read(pc);
@@ -76,40 +175,22 @@
                     cycles+=4;
                     break;
                 case 0x1: //LD BC,d16
-                    bc.bytes.b = Bus->read(pc+1);
-                    bc.bytes.c = Bus->read(pc+2);
-                    pc+=3;
-                    cycles+=12;
+                    LD_d16(bc.bytes.b, bc.bytes.c);
                     break;                
-                case 0x2: //LD BC,A
-                    bc.bc = af.bytes.a;
-                    pc+=1;
+                case 0x2: //LD (BC),A
+                    LD_A_ADDRESS(bc.bc);
                     break;
                 case 0x3: //INC BC
-                    bc.bc+=1;
-                    pc+=1;
-                    cycles+=8;
+                    INC(bc.bc);
                     break;
                 case 0x4: //INC B (Z 0 H -) 
-                    Zflag(bc.bytes.b, 1);
-                    af.bytes.f &= 0b10111111; //N flag
-                    Hflag(bc.bytes.b, 1);
-                    bc.bytes.b+=1;
-                    pc+=1;
-                    cycles+=4;
+                    INC(bc.bytes.b);
                     break;
                 case 0x5: //DEC B (Z 1 H -)
-                    Zflag(bc.bytes.b, -1);
-                    af.bytes.f |= 0b01000000; //N flag
-                    Hflag(bc.bytes.b, -1);
-                    bc.bytes.b-=1;
-                    pc+=1;
-                    cycles+=4;
+                    DEC(bc.bytes.b);
                     break;
                 case 0x6: //LD B,d8
-                    bc.bytes.b = Bus->read(pc+1);
-                    pc+=2;
-                    cycles+=8;
+                    LD_d8(bc.bytes.b);
                     break;
                 case 0x7: //RLCA (0 0 0 A7)
                 { 
@@ -134,43 +215,23 @@
                     cycles+=20;
                     break;
                 case 0x9: //ADD HL, BC (- 0 H C)
-                    Hflag(hl.hl, bc.bc);
-                    af.bytes.f &= 0b10111111; //N flag
-                    Cflag(hl.hl, bc.bc);
-                    hl.hl += bc.bc;
-                    pc+=1;
-                    cycles+=8;
+                    ADD(hl.hl, bc.bc);
                     break;
                 case 0xa: //LD A, BC
-                    af.bytes.a = Bus->read(bc.bc);
-                    pc+=1;
-                    cycles+=8;
+                    LD_A_ADDRESS(bc.bc);
                     break;
                 case 0xb: //DEC BC
-                    bc.bc-=1;
-                    pc+=1;
-                    cycles+=4;
+                    DEC(bc.bc);
                     break;
                 case 0xc: //INC C (Z 0 H -)
-                    Zflag(bc.bytes.c, 1);
-                    af.bytes.f &= 0b10111111;
-                    Hflag(bc.bytes.c, 1);
-                    bc.bytes.c+=1;
-                    pc+=1;
-                    cycles+=4;
+                    INC(bc.bytes.c);
                     break;
                 case 0xd: //DEC C (Z 1 H -)
-                    Zflag(bc.bytes.c, -1);
-                    af.bytes.f |= 0b01000000;
-                    Cflag(bc.bytes.c, -1);
-                    bc.bytes.c-=1;
-                    pc+=1;
-                    cycles+=4;
-                case 0xe://LD C, d8
-                    bc.bytes.c = Bus->read(pc+1);
-                    pc+=2;
-                    cycles+=4;
-                case 0xf:
+                    DEC(bc.bytes.c);
+                    break;
+                case 0xe: //LD C, d8
+                    LD_d8(bc.bytes.c);
+                case 0xf: //RRCA
                 { 
                     bool carry = (af.bytes.a & 0x01);
                     af.bytes.a >>= 1;
@@ -198,15 +259,10 @@
                     //TODO. Need buttons.
 
                 case 0x1://LD DE, d16
-                    de.bytes.d = Bus->read(pc+1);
-                    de.bytes.e = Bus->read(pc+2);
-                    pc+=3;
-                    cycles+=12;
+                    LD_d16(de.bytes.d, de.bytes.e);
                     break;
                 case 0x2://LD DE, a
-                    bc.bc = af.bytes.a;
-                    pc+=1;
-                    cycles+=8;
+                    LD_ADDRESS_A(de.bytes.d, )
                 case 0x3://INC BC
                     de.de+=1;
                     pc+=1;

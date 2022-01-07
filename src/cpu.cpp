@@ -152,12 +152,13 @@
         cycles+=8;
     }
 
-        void cpu::LD_A_ADDRESS(uint16_t address)
+    void cpu::LD_A_ADDRESS(uint16_t address)
     {
         af.bytes.a = Bus->read(address);
         pc+=1;
         cycles+=8;
     }
+
 
     void cpu::execOP()
     {
@@ -217,7 +218,7 @@
                 case 0x9: //ADD HL, BC (- 0 H C)
                     ADD(hl.hl, bc.bc);
                     break;
-                case 0xa: //LD A, BC
+                case 0xa: //LD A, (BC)
                     LD_A_ADDRESS(bc.bc);
                     break;
                 case 0xb: //DEC BC
@@ -231,7 +232,7 @@
                     break;
                 case 0xe: //LD C, d8
                     LD_d8(bc.bytes.c);
-                case 0xf: //RRCA
+                case 0xf: //RRCA (0 0 0 A0)
                 { 
                     bool carry = (af.bytes.a & 0x01);
                     af.bytes.a >>= 1;
@@ -258,24 +259,132 @@
                 case 0x0://STOP
                     //TODO. Need buttons.
 
+                    //Halts and turns off screen/sound.
+
                 case 0x1://LD DE, d16
                     LD_d16(de.bytes.d, de.bytes.e);
                     break;
                 case 0x2://LD DE, a
-                    LD_ADDRESS_A(de.bytes.d, )
-                case 0x3://INC BC
-                    de.de+=1;
-                    pc+=1;
-                    cycles+=8;
+                    LD_ADDRESS_A(de.bytes.d);
+                case 0x3://INC DE
+                   INC(de.de);
                     break;
-                case 0x4://INC B
+                case 0x4://INC D (Z 0 H -)
+                    INC(de.bytes.d);
+                    break;
+                case 0x5:// DEC D (Z 1 H -)
+                    DEC(de.bytes.d);
+                    break;
+                case 0x6://LD D,d8
+                    LD_d8(de.bytes.d);
+                    break;
+                case 0x7://RLA (0 0 0 A7)
+                { 
+                    bool carry = (((af.bytes.a << 1) & 0xff00));
+                    af.bytes.a <<= 1;
+                    af.bytes.a += ((af.bytes.f & 0b00010000) >> 5);
                     
-
-
-
-
-
+                    if(carry){
+                        af.bytes.f |= 0b00010000;
+                    } else {
+                        af.bytes.f &= 0b11101111;
+                    }                    
+                    
+                    pc+=1;
+                    cycles+=4;
+                    break; 
+                }
+                case 0x8://JR a8
+                    pc += (signed char)((Bus->read(pc+2)+(pc+1)));
+                    pc+=2;
+                    cycles+=12;
+                case 0x9://ADD HL, DE
+                    ADD(hl.hl, bc.bc);
+                    break;
+                case 0xa://LD A, (DE)
+                    LD_A_ADDRESS(bc.bc);
+                    break;
+                case 0xb://DEC DE
+                    DEC(de.de);
+                    break;
+                case 0xc://INC E
+                    INC(de.bytes.e);
+                    break;
+                case 0xd://DEC E
+                    DEC(de.bytes.e);
+                    break;
+                case 0xe://LDE E,d8
+                    LD_d8(de.bytes.e);
+                    break;
+                case 0xf:// RRA (0 0 0 A7)
+                    bool carry = (((af.bytes.a >> 1) & 0x00ff));
+                    af.bytes.a >>= 1;
+                    af.bytes.a += ((af.bytes.f & 0b00010000) << 3);
+                    
+                    if(carry){
+                        af.bytes.f |= 0b00010000;
+                    } else {
+                        af.bytes.f &= 0b11101111;
+                    }                    
+                    
+                    pc+=1;
+                    cycles+=4;  
+                    break;
             }
+            break;
+    
+    case 0x2:
+        switch(opcodeL)
+        {
+            case 0x0://JR NZ,r8
+                if(af.bytes.f & 0b10000000)
+                {
+                    pc += (signed char)((Bus->read(pc+2)+(pc+1)));
+                    pc+=2;
+                    cycles+=12;  
+                } else {
+                    pc+=2;
+                    cycles+=8;
+                }
+                break;
+            case 0x1://LD HL, d16
+                LD_d16(de.bytes.d, de.bytes.e);
+                break;
+            case 0x2://LD (HL+), A
+                LD_ADDRESS_A(hl.hl);
+                hl.hl+=1;
+                pc+=1;
+                cycles+=8;
+                break;
+            case 0x3://INC HL
+                INC(hl.hl);
+                break;
+            case 0x4://INC H (Z 0 H -)
+                INC(hl.bytes.h);
+                break;
+            case 0x5://DEC H (Z 1 H -)
+                DEC(hl.bytes.h);
+                break;
+            case 0x6://LD H, d8
+                LD_d8(hl.bytes.h);
+                break;
+            case 0x7://DAA
+                if((af.bytes.f & 0b01000000) || ((af.bytes.a && 0b11110000) > 9))
+                {
+                    af.bytes.a+=0x06;
+                } else if ((af.bytes.f & 0b00010000) || ((af.bytes.a >> 4) > 9)) {
+                    af.bytes.a+=0x60;
+                }
+                break;
+            case 0x8:
+                
+
+
+
+
+
+
+        }
 
         default:
             printf("INVALID OPCODE\n");

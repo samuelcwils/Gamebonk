@@ -75,7 +75,7 @@
         cycles+=8;
     }
 
-    void cpu::LD_a_b(uint8_t &a, uint8_t b)
+    void cpu::LD_REG1_REG2(uint8_t &a, uint8_t b)
     {
         a = b;
         pc+=1;
@@ -85,6 +85,13 @@
     void cpu::LD_HL_REG(uint8_t reg)
     {
         Bus->write(hl.hl, reg);
+        pc+=1;
+        cycles+=2;
+    }
+
+    void cpu::LD_REG_HL(uint8_t &reg)
+    {
+        reg = Bus->read(hl.hl);
         pc+=1;
         cycles+=2;
     }
@@ -509,54 +516,52 @@
             switch(opcodeL)
             {
                 case 0x0://LD B,B
-                    LD_a_b(bc.bytes.b, bc.bytes.b);
+                    LD_REG1_REG2(bc.bytes.b, bc.bytes.b);
                     break;
                 case 0x1://LD B,C
-                    LD_a_b(bc.bytes.b, bc.bytes.c);
+                    LD_REG1_REG2(bc.bytes.b, bc.bytes.c);
                     break;
                 case 0x2://LD B,D
-                    LD_a_b(bc.bytes.b, de.bytes.d);
+                    LD_REG1_REG2(bc.bytes.b, de.bytes.d);
                     break;
                 case 0x3://LD B,E
-                    LD_a_b(bc.bytes.b, de.bytes.e);
+                    LD_REG1_REG2(bc.bytes.b, de.bytes.e);
                     break;
                 case 0x4://LD B,H
-                    LD_a_b(bc.bytes.b, hl.bytes.h);
+                    LD_REG1_REG2(bc.bytes.b, hl.bytes.h);
                     break;
                 case 0x5://LD B,L
-                    LD_a_b(bc.bytes.b, hl.bytes.l);
+                    LD_REG1_REG2(bc.bytes.b, hl.bytes.l);
                     break;
                 case 0x6://LD B,(HL)
-                    LD_a_b(bc.bytes.b, Bus->read(hl.hl));
-                    cycles++;
+                    LD_REG_HL(bc.bytes.b);
                     break;
                 case 0x7://LD B,A
-                    LD_a_b(bc.bytes.b, af.bytes.a);
+                    LD_REG1_REG2(bc.bytes.b, af.bytes.a);
                     break;
                 case 0x8://LD C,B
-                    LD_a_b(bc.bytes.c, bc.bytes.b);
+                    LD_REG1_REG2(bc.bytes.c, bc.bytes.b);
                     break;
                 case 0x9://LD C,C
-                    LD_a_b(bc.bytes.c, bc.bytes.c);
+                    LD_REG1_REG2(bc.bytes.c, bc.bytes.c);
                     break;
                 case 0xa://LD C,D
-                    LD_a_b(bc.bytes.c, de.bytes.d);
+                    LD_REG1_REG2(bc.bytes.c, de.bytes.d);
                     break;
                 case 0xb://LD C,E
-                    LD_a_b(bc.bytes.c, de.bytes.e);
+                    LD_REG1_REG2(bc.bytes.c, de.bytes.e);
                     break;
                 case 0xc://LD C,H
-                    LD_a_b(bc.bytes.c, hl.bytes.h);
+                    LD_REG1_REG2(bc.bytes.c, hl.bytes.h);
                     break;
                 case 0xd://LD C,L
-                    LD_a_b(bc.bytes.c, hl.bytes.l);
+                    LD_REG1_REG2(bc.bytes.c, hl.bytes.l);
                     break;
                 case 0xe://LD C,(HL)
-                    LD_a_b(bc.bytes.c, Bus->read(hl.hl));
-                    cycles++;
+                    LD_REG_HL(bc.bytes.c);
                     break;
                 case 0xf://LD C,A
-                    LD_a_b(bc.bytes.c, af.bytes.a);
+                    LD_REG1_REG2(bc.bytes.c, af.bytes.a);
                     break;
             }
             break;
@@ -565,54 +570,52 @@
             switch(opcodeL)
             {
                 case 0x0://LD D,B
-                    LD_a_b(de.bytes.d, bc.bytes.b);
+                    LD_REG1_REG2(de.bytes.d, bc.bytes.b);
                     break;
                 case 0x1://LD D,C
-                    LD_a_b(de.bytes.d, bc.bytes.c);
+                    LD_REG1_REG2(de.bytes.d, bc.bytes.c);
                     break;
                 case 0x2://LD D,D
-                    LD_a_b(de.bytes.d, de.bytes.d);
+                    LD_REG1_REG2(de.bytes.d, de.bytes.d);
                     break;
                 case 0x3://LD D,E
-                    LD_a_b(de.bytes.d, de.bytes.e);
+                    LD_REG1_REG2(de.bytes.d, de.bytes.e);
                     break;
                 case 0x4://LD D,H
-                    LD_a_b(de.bytes.d, hl.bytes.h);
+                    LD_REG1_REG2(de.bytes.d, hl.bytes.h);
                     break;
                 case 0x5://LD D,L
-                    LD_a_b(de.bytes.d, hl.bytes.l);
+                    LD_REG1_REG2(de.bytes.d, hl.bytes.l);
                     break;
                 case 0x6://LD D,(HL)
-                    LD_a_b(de.bytes.d, Bus->read(hl.bytes.h));
-                    cycles++;
+                    LD_REG_HL(de.bytes.d);
                     break;
                 case 0x7://LD D,A
-                    LD_a_b(de.bytes.d, af.bytes.a);
+                    LD_REG1_REG2(de.bytes.d, af.bytes.a);
                     break;
                 case 0x8://LD E,B
-                    LD_a_b(de.bytes.e, bc.bytes.b);
+                    LD_REG1_REG2(de.bytes.e, bc.bytes.b);
                     break;
                 case 0x9://LD E,C
-                    LD_a_b(de.bytes.e, bc.bytes.c);
+                    LD_REG1_REG2(de.bytes.e, bc.bytes.c);
                     break;
                 case 0xa://LD E,D
-                    LD_a_b(de.bytes.e, de.bytes.d);
+                    LD_REG1_REG2(de.bytes.e, de.bytes.d);
                     break;
                 case 0xb://LD E,E
-                    LD_a_b(de.bytes.e, de.bytes.e);
+                    LD_REG1_REG2(de.bytes.e, de.bytes.e);
                     break;
                 case 0xc://LD E,H
-                    LD_a_b(de.bytes.e, hl.bytes.h);
+                    LD_REG1_REG2(de.bytes.e, hl.bytes.h);
                     break;
                 case 0xd://LD E,L
-                    LD_a_b(de.bytes.e, hl.bytes.l);
+                    LD_REG1_REG2(de.bytes.e, hl.bytes.l);
                     break;
                 case 0xe://LD E,(HL)
-                    LD_a_b(de.bytes.e, Bus->read(hl.hl));
-                    cycles++;
+                    LD_REG_HL(de.bytes.e);
                     break;
                 case 0xf://LD E,A
-                    LD_a_b(de.bytes.e, af.bytes.a);
+                    LD_REG1_REG2(de.bytes.e, af.bytes.a);
                     break;
             }
             break;
@@ -621,54 +624,52 @@
             switch(opcodeL)
             {
                 case 0x0://LD H,B
-                    LD_a_b(hl.bytes.h, bc.bytes.b);
+                    LD_REG1_REG2(hl.bytes.h, bc.bytes.b);
                     break;
                 case 0x1://LD H,C
-                    LD_a_b(hl.bytes.h, bc.bytes.c);
+                    LD_REG1_REG2(hl.bytes.h, bc.bytes.c);
                     break;
                 case 0x2://LD H,D
-                    LD_a_b(hl.bytes.h, de.bytes.d);
+                    LD_REG1_REG2(hl.bytes.h, de.bytes.d);
                     break;
                 case 0x3://LD H,E
-                    LD_a_b(hl.bytes.h, de.bytes.e);
+                    LD_REG1_REG2(hl.bytes.h, de.bytes.e);
                     break;
                 case 0x4://LD H,H
-                    LD_a_b(hl.bytes.h, hl.bytes.h);
+                    LD_REG1_REG2(hl.bytes.h, hl.bytes.h);
                     break;
                 case 0x5://LD H,L
-                    LD_a_b(hl.bytes.h, hl.bytes.l);
+                    LD_REG1_REG2(hl.bytes.h, hl.bytes.l);
                     break;
                 case 0x6://LD H,(HL)
-                    LD_a_b(hl.bytes.h, Bus->read(hl.hl));
-                    cycles++;
+                    LD_REG_HL(hl.bytes.h);
                     break;
                 case 0x7://LD H,A
-                    LD_a_b(hl.bytes.h, af.bytes.a);
+                    LD_REG1_REG2(hl.bytes.h, af.bytes.a);
                     break;
                 case 0x8://LD L,B
-                    LD_a_b(hl.bytes.l, bc.bytes.b);
+                    LD_REG1_REG2(hl.bytes.l, bc.bytes.b);
                     break;
                 case 0x9://LD L,C
-                    LD_a_b(hl.bytes.l, bc.bytes.c);
+                    LD_REG1_REG2(hl.bytes.l, bc.bytes.c);
                     break;
                 case 0xa://LD L,D
-                    LD_a_b(hl.bytes.l, de.bytes.d);
+                    LD_REG1_REG2(hl.bytes.l, de.bytes.d);
                     break;
                 case 0xb://LD L,E
-                    LD_a_b(hl.bytes.l, de.bytes.e);
+                    LD_REG1_REG2(hl.bytes.l, de.bytes.e);
                     break;
                 case 0xc://LD L,H
-                    LD_a_b(hl.bytes.l, hl.bytes.h);
+                    LD_REG1_REG2(hl.bytes.l, hl.bytes.h);
                     break;
                 case 0xd://LD L,L
-                    LD_a_b(hl.bytes.l, hl.bytes.l);
+                    LD_REG1_REG2(hl.bytes.l, hl.bytes.l);
                     break;
                 case 0xe://LD L,(HL)
-                    LD_a_b(hl.bytes.l, Bus->read(hl.hl));
-                    cycles++;
+                    LD_REG_HL(hl.bytes.l);
                     break;
                 case 0xf://LD L,A
-                    LD_a_b(hl.bytes.l, af.bytes.a);
+                    LD_REG1_REG2(hl.bytes.l, af.bytes.a);
                     break;
             }
             break;
@@ -676,10 +677,8 @@
         case 0x7:
             switch(opcodeL)
             {
-                case 0x0:
-                    Bus->write(hl.hl, bc.bytes.b);
-                    pc+=1;
-                    cycles+=2;
+                case 0x0://LD (HL),B
+                    LD_HL_REG(bc.bytes.b);
                     break;
                 case 0x1:
                     

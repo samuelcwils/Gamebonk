@@ -7,7 +7,7 @@
         af.af = 0;
         bc.bc = 0;
         de.de = 0;
-        sp = 0;
+        sp.sp = 0;
         pc = 0x0150;
     }
 
@@ -62,8 +62,8 @@
 
     void cpu::LD_d16(uint8_t &high, uint8_t &low)
     {
-        high = Bus->read(pc+1);
-        low = Bus->read(pc+2);
+        low = Bus->read(pc+1);
+        high = Bus->read(pc+2);
         pc+=3;
         cycles+=12;       
     }
@@ -210,8 +210,8 @@
                     break; 
                 }
                 case 0x8: //LD a16, SP
-                    Bus->write(pc+1, sp & 0x00ff);
-                    Bus->write(pc+2, (sp & 0xff00) >> 8);
+                    Bus->write(pc+1, sp.sp & 0x00ff);
+                    Bus->write(pc+2, (sp.sp & 0xff00) >> 8);
                     pc+=3;
                     cycles+=20;
                     break;
@@ -333,58 +333,174 @@
             }
             break;
     
-    case 0x2:
-        switch(opcodeL)
-        {
-            case 0x0://JR NZ,r8
-                if(af.bytes.f & 0b10000000)
+        case 0x2:
+            switch(opcodeL)
+            {
+                case 0x0://JR NZ,r8
+                    if(af.bytes.f & 0b01111111)
+                    {
+                        pc += (signed char)((Bus->read(pc+2)+(pc+1)));
+                        pc+=2;
+                        cycles+=12;  
+                    } else {
+                        pc+=2;
+                        cycles+=8;
+                    }
+                    break;
+                case 0x1://LD HL, d16
+                    LD_d16(de.bytes.d, de.bytes.e);
+                    break;
+                case 0x2://LD (HL+), A
+                    LD_ADDRESS_A(hl.hl);
+                    break;
+                case 0x3://INC HL
+                    INC(hl.hl);
+                    break;
+                case 0x4://INC H (Z 0 H -)
+                    INC(hl.bytes.h);
+                    break;
+                case 0x5://DEC H (Z 1 H -)
+                    DEC(hl.bytes.h);
+                    break;
+                case 0x6://LD H, d8
+                    LD_d8(hl.bytes.h);
+                    break;
+                case 0x7://DAA (Z - 0 C) //TODO
+                    if((af.bytes.f & 0b01000000) || ((af.bytes.a && 0b11110000) > 9))
+                    {
+                        Zflag(af.bytes.a, 0x06);
+
+                        Cflag(af.bytes.a, 0x06)
+                        af.bytes.a+=0x06;
+                    } else if ((af.bytes.f & 0b00010000) || ((af.bytes.a >> 4) > 9)) {
+                        af.bytes.a+=0x60;
+                    }
+                    pc+=1;
+                    pc+=4;
+                    break;
+                case 0x8: //JR Z, r8
+                    if(af.bytes.f & 0b10000000)
+                    {
+                        pc += (signed char)((Bus->read(pc+2)+(pc+1)));
+                        pc+=2;
+                        cycles+=12;  
+                    } else {
+                        pc+=2;
+                        cycles+=8;
+                    }
+                    break; 
+                case 0x9://ADD HL, HL (- 0 H C)
+                    ADD(hl.hl, hl.hl);
+                    break;
+                case 0xa://LD A,(HL+)
+                    LD_A_ADDRESS(hl.hl);
+                    hl.hl+=1;
+                    break;
+                case 0xb://DEC HL
+                    DEC(hl.hl);
+                    break;
+                case 0xc://INC L
+                    INC(hl.bytes.l);
+                    break;
+                case 0xd://DEC L
+                    DEC(hl.bytes.l);
+                    break;
+                case 0xe://LD L,d8
+                    LD_d8(hl.bytes.l);
+                    break;
+                case 0xf://CPL
+                    af.bytes.a = ~af.bytes.a;
+                    af.bytes.f |= 0b01000000;
+                    af.bytes.f |= 0b00100000;
+                    break;
+            }
+
+        case 0x3:
+            switch(opcodeL)
+            {
+                case 0x0://LD NC,s8
+                    if(!(af.bytes.f & 0b00010000))
+                    {
+                        pc += (signed char)((Bus->read(pc+2)+(pc+1)));
+                        pc+=2;
+                        cycles+=12;  
+                    } else {
+                        pc+=2;
+                        cycles+=8;
+                    }
+                case 0x1://LD SP,d16
+                    LD_d16(sp.bytes.s, sp.bytes.p);
+                    break;
+                case 0x2://LD (HL-),d16
+                    LD_ADDRESS_A(hl.hl);
+                    hl.hl+=1;
+                    break;
+                case 0x3://INC SP
+                    INC(sp.sp);
+                    break;
+                case 0x4://INC (HL) (Z 0 H -)
                 {
-                    pc += (signed char)((Bus->read(pc+2)+(pc+1)));
-                    pc+=2;
-                    cycles+=12;  
-                } else {
-                    pc+=2;
-                    cycles+=8;
+                    uint8_t temp = Bus->read(hl.hl);
+                    Zflag(temp, 1);
+                    af.bytes.f &= 0b10111111; //N flag
+                    Hflag(temp, 1);
+                    temp++;
+                    Bus->write(hl.hl, temp);
+                    pc+=1;
+                    cycles+=12;
                 }
-                break;
-            case 0x1://LD HL, d16
-                LD_d16(de.bytes.d, de.bytes.e);
-                break;
-            case 0x2://LD (HL+), A
-                LD_ADDRESS_A(hl.hl);
-                hl.hl+=1;
-                pc+=1;
-                cycles+=8;
-                break;
-            case 0x3://INC HL
-                INC(hl.hl);
-                break;
-            case 0x4://INC H (Z 0 H -)
-                INC(hl.bytes.h);
-                break;
-            case 0x5://DEC H (Z 1 H -)
-                DEC(hl.bytes.h);
-                break;
-            case 0x6://LD H, d8
-                LD_d8(hl.bytes.h);
-                break;
-            case 0x7://DAA
-                if((af.bytes.f & 0b01000000) || ((af.bytes.a && 0b11110000) > 9))
+                case 0x5://DEC (HL) (Z 1 H -)
                 {
-                    af.bytes.a+=0x06;
-                } else if ((af.bytes.f & 0b00010000) || ((af.bytes.a >> 4) > 9)) {
-                    af.bytes.a+=0x60;
+                    uint8_t temp = Bus->read(hl.hl);
+                    Zflag(temp, -1);
+                    af.bytes.f |= 0b01000000; //N flag
+                    Hflag(temp, -1);
+                    temp--;
+                    Bus->write(hl.hl, temp);
+                    pc+=1;
+                    cycles+=12;
+                    break;
                 }
-                break;
-            case 0x8:
-                
+                case 0x6://LD (HL),d8
+                    Bus->write(hl.hl, Bus->read(pc+1));
+                    pc+=2;
+                    cycles+=12;
+                    break;
+                case 0x7://SCF (- 0 0 C)
+                    af.bytes.f &= 0b10011111; //sets N and H to 0
+                    af.bytes.f |= 0b00010000; //sets C to 1
+                    pc+=1;
+                    cycles+=4;
+                    break;
+                case 0x8://JR C,r8
+                    if(af.bytes.f & 0b00010000)
+                    {
+                        pc += (signed char)((Bus->read(pc+2)+(pc+1)));
+                        pc+=2;
+                        cycles+=12;  
+                    } else {
+                        pc+=2;
+                        cycles+=8;
+                    }
+                    break; 
+                case 0x9://ADD HL,SP (- 0 H C)
+                    ADD(h.hl, sp.sp);
+                    break;
+                case 0xa://LD A, (HL-)
+                    LD_A_ADDRESS(hl.hl)
+                    hl.hl--;
+                    //TODO add note to hl+ and this
+                    break;
 
 
 
 
 
 
-        }
+
+
+            }
+
 
         default:
             printf("INVALID OPCODE\n");

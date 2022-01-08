@@ -6,7 +6,6 @@ class cpu {
 
 private:
     bus* Bus;
-    uint16_t sp;
     uint16_t pc; 
     uint8_t cycles; //counts up cycles then emulates speed 
 
@@ -64,6 +63,15 @@ private:
         } bytes;
         uint16_t hl;
     } hl; //register de 
+
+    union {
+        struct{ 
+        uint8_t p;
+        uint8_t s;
+        } bytes;
+        uint16_t sp;
+    } sp; //register de 
+
 
     
 

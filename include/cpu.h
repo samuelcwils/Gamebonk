@@ -22,6 +22,8 @@ private:
     void LD_HL_REG(uint8_t reg);
     void LD_ADDRESS_A(uint16_t address);
     void LD_A_ADDRESS(uint16_t address);
+
+    void JR(bool flag);
     
     void ADD(uint16_t &a, uint16_t b);
     void ADD(uint8_t &a, uint8_t b);

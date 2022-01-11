@@ -8,7 +8,7 @@
         bc.bc = 0;
         de.de = 0;
         sp.sp = 0;
-        pc = 0x0150;
+        pc.pc = 0x0150;
     }
 
     void cpu::Zflag(uint16_t a, uint16_t b)
@@ -62,51 +62,51 @@
 
     void cpu::LD_d16(uint8_t &high, uint8_t &low)
     {
-        low = Bus->read(pc+1);
-        high = Bus->read(pc+2);
-        pc+=3;
+        low = Bus->read(pc.pc+1);
+        high = Bus->read(pc.pc+2);
+        pc.pc+=3;
         cycles+=12;       
     }
 
     void cpu::LD_d8(uint8_t &byte)
     {
-        byte = Bus->read(pc+1);
-        pc+=2;
+        byte = Bus->read(pc.pc+1);
+        pc.pc+=2;
         cycles+=8;
     }
 
     void cpu::LD_REG1_REG2(uint8_t &a, uint8_t b)
     {
         a = b;
-        pc+=1;
+        pc.pc+=1;
         cycles+=4;
     }
     
     void cpu::LD_HL_REG(uint8_t reg)
     {
         Bus->write(hl.hl, reg);
-        pc+=1;
+        pc.pc+=1;
         cycles+=2;
     }
 
     void cpu::LD_REG_HL(uint8_t &reg)
     {
         reg = Bus->read(hl.hl);
-        pc+=1;
+        pc.pc+=1;
         cycles+=2;
     }
     
     void cpu::LD_ADDRESS_A(uint16_t address)
     {
         Bus->write(address, af.bytes.a);
-        pc+=1;
+        pc.pc+=1;
         cycles+=8;
     }
 
     void cpu::LD_A_ADDRESS(uint16_t address)
     {
         af.bytes.a = Bus->read(address);
-        pc+=1;
+        pc.pc+=1;
         cycles+=8;
     }
 
@@ -114,11 +114,11 @@
     {
         if(flag)
         {
-            pc += (signed char)((Bus->read(pc+2)+(pc+1)));
-            pc+=2;
+            pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
+            pc.pc+=2;
             cycles+=12;  
         } else {
-            pc+=2;
+            pc.pc+=2;
             cycles+=8;
         }
     }
@@ -130,7 +130,7 @@
         Hflag(a, b);
         Cflag(a, b);
         a += b;
-        pc+=1;
+        pc.pc+=1;
         cycles+=8;
     }
     
@@ -141,14 +141,103 @@
         Hflag(a, b);
         Cflag(a, b);
         a += b;
-        pc+=1;
-        cycles+=8;
+        pc.pc+=1;
+        cycles+=4;
     }
+
+    void cpu::ADC(uint8_t &a, uint8_t b)
+    {
+        uint8_t temp = (b + (af.bytes.f & 0x00010000));
+        Zflag(a, temp);
+        af.bytes.f &= 0b10111111; //N flag
+        Hflag(a, temp);
+        Cflag(a, temp);
+        a += temp;
+        pc.pc+=1;
+        cycles+=4;
+    }
+
+    void cpu::SUB(uint8_t &a, uint8_t b)
+    {
+        Zflag(a, -b);
+        af.bytes.f |= 0b01000000; //N flag
+        Hflag(a, -b);
+        Cflag(a, -b);
+        a -= b;
+        pc.pc+=1;
+        cycles+=4;      
+    }
+
+    void cpu::SBC(uint8_t &a, uint8_t b)
+    {
+        uint8_t temp = (b + (af.bytes.f & 0x00010000));
+        Zflag(a, -temp);
+        af.bytes.f |= 0b01000000; //N flag
+        Hflag(a, -temp);
+        Cflag(a, -temp);
+        a -= temp; 
+        pc.pc+=1;
+        cycles+=4;       
+    }
+
+    void cpu::AND(uint8_t &a, uint8_t b)
+    {
+        a&=b;
+        
+        if(a==0)
+        {
+            af.bytes.f |= 0b10000000;//Z Flag
+        }
+        af.bytes.f |= 0b00100000;//H Flag
+        af.bytes.f &= 0b10101111;//N and C flag
+        
+        pc.pc+=1;
+        cycles+=4;
+    }
+
+    void cpu::XOR(uint8_t &a, uint8_t b)
+    {
+        a^=b;
+        
+        if(a==0)
+        {
+            af.bytes.f |= 0b10000000;//Z Flag
+        }
+        af.bytes.f &= 0b10001111;//N and H and C flag
+        
+        pc.pc+=1;
+        cycles+=4;
+    }
+    
+    void cpu::OR(uint8_t &a, uint8_t b)
+    {
+        a|=b;        
+        
+        if(a==0) 
+        {
+            af.bytes.f |= 0b10000000;//Z Flag
+        }
+        af.bytes.f &= 0b10001111;//N and H and C flag
+        
+        pc.pc+=1;
+        cycles+=4;
+    }
+
+    void cpu::CP(uint8_t &a, uint8_t b)
+    {
+        Zflag(a, -b);
+        af.bytes.f |= 0b01000000; //N flag
+        Hflag(a, -b);
+        Cflag(a, -b);
+        pc.pc+=1;
+        cycles+=4;
+    }
+
 
     void cpu::INC(uint16_t &value)
     {
         value+=1;
-        pc+=1;
+        pc.pc+=1;
         cycles+=8;
     }
 
@@ -158,14 +247,14 @@
         af.bytes.f &= 0b10111111; //N flag
         Hflag(byte, 1);
         byte+=1;
-        pc+=1;
+        pc.pc+=1;
         cycles+=4;
     }
 
     void cpu::DEC(uint16_t &value)
     {
         value-=1;
-        pc+=1;
+        pc.pc+=1;
         cycles+=4;
     }
 
@@ -175,13 +264,13 @@
         af.bytes.f |= 0b01000000;
         Cflag(byte, -1);
         byte-=1;
-        pc+=1;
+        pc.pc+=1;
         cycles+=4;
     }
 
     void cpu::execOP()
     {
-        uint8_t opcode = Bus->read(pc);
+        uint8_t opcode = Bus->read(pc.pc);
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
 
@@ -191,7 +280,7 @@
             switch(opcodeL)
             {
                 case 0x0: //NOP
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;
                     break;
                 case 0x1: //LD BC,d16
@@ -224,14 +313,14 @@
                         af.bytes.f &= 0b11101111;
                     }                    
                     
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;
                     break; 
                 }
                 case 0x8: //LD a16, SP
-                    Bus->write(pc+1, sp.sp & 0x00ff);
-                    Bus->write(pc+2, (sp.sp & 0xff00) >> 8);
-                    pc+=3;
+                    Bus->write(pc.pc+1, sp.sp & 0x00ff);
+                    Bus->write(pc.pc+2, (sp.sp & 0xff00) >> 8);
+                    pc.pc+=3;
                     cycles+=20;
                     break;
                 case 0x9: //ADD HL, BC (- 0 H C)
@@ -263,7 +352,7 @@
                         af.bytes.f &= 0b11101111;
                     }                    
                     
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;
                     break; 
                 }
@@ -308,13 +397,13 @@
                         af.bytes.f &= 0b11101111;
                     }                    
                     
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;
                     break; 
                 }
                 case 0x8://JR r8
-                    pc += (signed char)((Bus->read(pc+2)+(pc+1)));
-                    pc+=2;
+                    pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
+                    pc.pc+=2;
                     cycles+=12;
                 case 0x9://ADD HL, DE
                     ADD(hl.hl, bc.bc);
@@ -345,7 +434,7 @@
                         af.bytes.f &= 0b11101111;
                     }                    
                     
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;  
                     break;
             }
@@ -391,8 +480,8 @@
                         Cflag(af.bytes.a, 0x60);
                         
                     }
-                    pc+=1;
-                    pc+=4;
+                    pc.pc+=1;
+                    pc.pc+=4;
                     break;
                 case 0x8: //JR Z, r8
                     JR(af.bytes.f & 0b10000000);
@@ -430,11 +519,11 @@
                 case 0x0://LD NC,s8
                     if(!(af.bytes.f & 0b00010000))
                     {
-                        pc += (signed char)((Bus->read(pc+2)+(pc+1)));
-                        pc+=2;
+                        pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
+                        pc.pc+=2;
                         cycles+=12;  
                     } else {
-                        pc+=2;
+                        pc.pc+=2;
                         cycles+=8;
                     }
                 case 0x1://LD SP,d16
@@ -455,7 +544,7 @@
                     Hflag(temp, 1);
                     temp++;
                     Bus->write(hl.hl, temp);
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=12;
                 }
                 case 0x5://DEC (HL) (Z 1 H -)
@@ -466,19 +555,19 @@
                     Hflag(temp, -1);
                     temp--;
                     Bus->write(hl.hl, temp);
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=12;
                     break;
                 }
                 case 0x6://LD (HL),d8
-                    Bus->write(hl.hl, Bus->read(pc+1));
-                    pc+=2;
+                    Bus->write(hl.hl, Bus->read(pc.pc+1));
+                    pc.pc+=2;
                     cycles+=12;
                     break;
                 case 0x7://SCF (- 0 0 C)
                     af.bytes.f &= 0b10011111; //sets N and H to 0
                     af.bytes.f |= 0b00010000; //sets C to 1
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;
                     break;
                 case 0x8://JR C,r8
@@ -506,7 +595,7 @@
                 case 0xf://CCF (- 0 0 !C)
                     af.bytes.f ^= 0b00010000;
                     af.bytes.f &= 0b10011111; //N and H
-                    pc+=1;
+                    pc.pc+=1;
                     cycles+=4;
                     break;
             }
@@ -680,9 +769,295 @@
                 case 0x0://LD (HL),B
                     LD_HL_REG(bc.bytes.b);
                     break;
-                case 0x1:
-                    
+                case 0x1://LD (HL),C
+                    LD_HL_REG(bc.bytes.c);
+                    break;
+                case 0x2://LD (HL),D
+                    LD_HL_REG(de.bytes.d);
+                    break;
+                case 0x3://LD (HL),E
+                    LD_HL_REG(de.bytes.e);
+                    break;
+                case 0x4://LD (HL),H
+                    LD_HL_REG(hl.bytes.h);
+                    break;
+                case 0x5://LD (HL),L
+                    LD_HL_REG(hl.bytes.l);
+                    break;
+                case 0x6://HALT   TODO: INPLEMENT INTERRUPTS
+                    break;
+                case 0x7://LD (HL),A
+                    LD_HL_REG(af.bytes.a);
+                case 0x8://LD A,B
+                    LD_REG1_REG2(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x9://LD A,C
+                    LD_REG1_REG2(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0xa://LD A,D
+                    LD_REG1_REG2(af.bytes.a, de.bytes.d);
+                    break;
+                case 0xb://LD A,E
+                    LD_REG1_REG2(af.bytes.a, de.bytes.e);
+                    break;
+                case 0xc://LD A, H
+                    LD_REG1_REG2(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0xd://LD A,L
+                    LD_REG1_REG2(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0xe://LD A,(HL)
+                    LD_REG_HL(af.bytes.a);
+                    break;
+                case 0xf://LD A,A
+                    LD_REG1_REG2(af.bytes.a, af.bytes.a);
+                    break;
+            }
+            break;
 
+        case 0x8:
+            switch(opcodeL)
+            {
+                case 0x0:
+                    ADD(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x1:
+                    ADD(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0x2:
+                    ADD(af.bytes.a, de.bytes.d);
+                    break;
+                case 0x3:
+                    ADD(af.bytes.a, de.bytes.e);
+                    break;
+                case 0x4:
+                    ADD(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0x5:
+                    ADD(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0x6:
+                    ADD(af.bytes.a, Bus->read(hl.hl));
+                    cycles+=4; //extra time for hl
+                    break;
+                case 0x7:
+                    ADD(af.bytes.a, af.bytes.a);
+                    break;
+                case 0x8:
+                    ADC(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x9:
+                    ADC(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0xa:
+                    ADC(af.bytes.a, de.bytes.d);
+                    break;
+                case 0xb:
+                    ADC(af.bytes.a, de.bytes.e);
+                    break;
+                case 0xc:
+                    ADC(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0xd:
+                    ADC(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0xe:
+                    ADC(af.bytes.a, Bus->read(hl.hl));
+                    cycles+=4; //extra time for hl
+                    break;
+                case 0xf:
+                    ADC(af.bytes.a, af.bytes.a);
+            }
+            break;
+        
+        case 0x9:
+            switch(opcodeL)
+            {
+                case 0x0:
+                    SUB(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x1:
+                    SUB(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0x2:
+                    SUB(af.bytes.a, de.bytes.d);
+                    break;
+                case 0x3:
+                    SUB(af.bytes.a, de.bytes.e);
+                    break;
+                case 0x4:
+                    SUB(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0x5:
+                    SUB(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0x6:
+                    SUB(af.bytes.a, Bus->read(hl.hl));
+                    cycles+=4; //extra time for hl
+                    break;
+                case 0x7:
+                    SUB(af.bytes.a, af.bytes.a);
+                    break;
+                case 0x8:
+                    SBC(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x9:
+                    SBC(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0xa:
+                    SBC(af.bytes.a, de.bytes.d);
+                    break;
+                case 0xb:
+                    SBC(af.bytes.a, de.bytes.e);
+                    break;
+                case 0xc:
+                    SBC(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0xd:
+                    SBC(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0xe:
+                    SBC(af.bytes.a, Bus->read(hl.hl));
+                    break;
+                case 0xf:
+                    SBC(af.bytes.a, af.bytes.a);
+                    break;
+            }
+            break;
+        
+        case 0xa:
+            switch(opcodeL)
+            {
+                case 0x0:
+                    AND(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x1:
+                    AND(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0x2:
+                    AND(af.bytes.a, de.bytes.d);
+                    break;
+                case 0x3:
+                    AND(af.bytes.a, de.bytes.e);
+                    break;
+                case 0x4:
+                    AND(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0x5:
+                    AND(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0x6:
+                    AND(af.bytes.a, Bus->read(hl.hl));
+                    cycles+=4; //extra time for hl
+                    break;
+                case 0x7:
+                    AND(af.bytes.a, af.bytes.a);
+                    break;
+                case 0x8:
+                    XOR(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x9:
+                    XOR(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0xa:
+                    XOR(af.bytes.a, de.bytes.d);
+                    break;
+                case 0xb:
+                    XOR(af.bytes.a, de.bytes.e);
+                    break;
+                case 0xc:
+                    XOR(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0xd:
+                    XOR(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0xe:
+                    XOR(af.bytes.a, Bus->read(hl.hl));
+                    break;
+                case 0xf:
+                    XOR(af.bytes.a, af.bytes.a);
+                    break;
+            }
+            break;
+                    
+        case 0xb:
+            switch(opcodeL)
+            {
+                case 0x0:
+                    OR(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x1:
+                    OR(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0x2:
+                    OR(af.bytes.a, de.bytes.d);
+                    break;
+                case 0x3:
+                    OR(af.bytes.a, de.bytes.e);
+                    break;
+                case 0x4:
+                    OR(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0x5:
+                    OR(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0x6:
+                    OR(af.bytes.a, Bus->read(hl.hl));
+                    cycles+=4; //extra time for hl
+                    break;
+                case 0x7:
+                    OR(af.bytes.a, af.bytes.a);
+                    break;
+                case 0x8:
+                    CP(af.bytes.a, bc.bytes.b);
+                    break;
+                case 0x9:
+                    CP(af.bytes.a, bc.bytes.c);
+                    break;
+                case 0xa:
+                    CP(af.bytes.a, de.bytes.d);
+                    break;
+                case 0xb:
+                    CP(af.bytes.a, de.bytes.e);
+                    break;
+                case 0xc:
+                    CP(af.bytes.a, hl.bytes.h);
+                    break;
+                case 0xd:
+                    CP(af.bytes.a, hl.bytes.l);
+                    break;
+                case 0xe:
+                    CP(af.bytes.a, Bus->read(hl.hl));
+                    break;
+                case 0xf:
+                    CP(af.bytes.a, af.bytes.a);
+                    break;
+            }
+            break;
+        
+        case 0xc:
+            switch(opcodeL)
+            {
+                case 0x0:
+                    if(af.bytes.f &= 0b10000000)
+                    {
+                        pc.bytes.c = Bus->read(sp.sp);
+                        pc.bytes.p = Bus->read(sp.sp+=1);
+                        sp.sp+=1;
+                        cycles+=20
+                    } else {
+                        pc+=1;
+                        cycles+=8;
+                    }
+                    break;
+                case 0x1:
+                        bc.bytes.c = Bus->read(sp.sp);
+                        bc.bytes.b = Bus->read(sp.sp+=1);
+                        sp.sp+=1;
+                        cycles+=8;
+                        break;
+                case 0x2:
+                    
 
 
             }
@@ -692,7 +1067,7 @@
 
         default:
             printf("INVALID OPCODE\n");
-            pc++;
+            pc.pc++;
             break;
         }
 

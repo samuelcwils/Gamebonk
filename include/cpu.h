@@ -6,7 +6,6 @@ class cpu {
 
 private:
     bus* Bus;
-    uint16_t pc; 
     uint8_t cycles; //counts up cycles then emulates speed 
 
     void emulateCycles();
@@ -28,6 +27,14 @@ private:
     
     void ADD(uint16_t &a, uint16_t b);
     void ADD(uint8_t &a, uint8_t b);
+    void ADC(uint8_t &a, uint8_t b);
+    void SUB(uint8_t &a, uint8_t b);
+    void SBC(uint8_t &a, uint8_t b);
+    
+    void AND(uint8_t &a, uint8_t b);
+    void XOR(uint8_t &a, uint8_t b);
+    void OR(uint8_t &a, uint8_t b);
+    void CP(uint8_t &a, uint8_t b);
 
     void INC(uint16_t &value);
     void INC(uint8_t &byte);
@@ -65,7 +72,7 @@ private:
         uint8_t h;
         } bytes;
         uint16_t hl;
-    } hl; //register de 
+    } hl; //register hl 
 
     union {
         struct{ 
@@ -73,17 +80,18 @@ private:
         uint8_t s;
         } bytes;
         uint16_t sp;
-    } sp; //register de 
-
-
+    } sp; //register sp
     
-
+    union {
+        struct{ 
+        uint8_t c;
+        uint8_t p;
+        } bytes;
+        uint16_t pc;
+    } pc; //register de 
 
 public:
     cpu(bus* Bus);
     void execOP();
-
-
-
 
 };

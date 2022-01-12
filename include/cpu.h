@@ -29,9 +29,13 @@ private:
     void JR_cond(bool flag);
     
     void POP(uint8_t &high, uint8_t &low);
-    void PUSH(uint8_t &high, uint8_t &low);
+    void PUSH(uint8_t high, uint8_t low);
     void CALL();
     void CALL_cond(bool flag);
+
+    void RST(uint8_t H);
+    void RET();
+    void RET_cond(bool flag);
     
     void ADD(uint16_t &a, uint16_t b);
     void ADD(uint8_t &a, uint8_t b);

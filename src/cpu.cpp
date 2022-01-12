@@ -110,16 +110,84 @@
         cycles+=8;
     }
 
-    void cpu::JR(bool flag)
+    void cpu::JP()
+    {
+        uint16_t temp = pc.pc;
+        pc.bytes.c = Bus->read(temp+1);
+        pc.bytes.p = Bus->read(temp+2);
+    }
+
+    void cpu::JR()
+    {
+        pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
+        pc.pc+=2;
+        cycles+=12;  
+    }
+
+
+    void cpu::JR_cond(bool flag)
     {
         if(flag)
         {
-            pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
-            pc.pc+=2;
-            cycles+=12;  
+            JR();
         } else {
             pc.pc+=2;
             cycles+=8;
+        }
+    }
+
+    void cpu::JP_cond(bool flag)
+    {
+        if(flag)
+        {
+            JP();
+        } else {
+            pc.pc+=3;
+            cycles+=3;
+        }
+    }
+
+    void cpu::POP(uint8_t &high, uint8_t &low)
+    {
+        low = Bus->read(sp.sp);
+        high = Bus->read(sp.sp+=1);
+        sp.sp+=1;
+        pc.pc+=1;
+        cycles+=12;
+    }
+
+    void cpu::PUSH(uint8_t &high, uint8_t &low)
+    {
+        sp.sp--;
+        Bus->write(sp.sp, high);
+        sp.sp--;
+        Bus->write(sp.sp, low); 
+        pc.pc+=1;
+        cycles+=16;    
+    }
+
+    void cpu::CALL()
+    {
+        sp.sp--;
+        Bus->write(sp.sp, pc.bytes.p);
+        sp.sp--;
+        Bus->write(sp.sp, pc.bytes.c);
+        
+        uint16_t temp = pc.pc;
+
+        pc.bytes.c = Bus->read(temp+1);
+        pc.bytes.p = Bus->read(temp+2);
+        cycles+=4;
+    }
+
+    void cpu::CALL_cond(bool flag)
+    {
+        if(flag)
+        {
+            CALL();
+        } else {
+            pc.pc+=3
+            cycles+=3;
         }
     }
 
@@ -401,10 +469,8 @@
                     cycles+=4;
                     break; 
                 }
-                case 0x8://JR r8
-                    pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
-                    pc.pc+=2;
-                    cycles+=12;
+                case 0x8://JR s8
+                    JR();
                 case 0x9://ADD HL, DE
                     ADD(hl.hl, bc.bc);
                     break;
@@ -443,8 +509,8 @@
         case 0x2:
             switch(opcodeL)
             {
-                case 0x0://JR NZ,r8
-                    JR(af.bytes.f & 0b01111111);
+                case 0x0://JR_cond NZ,r8
+                    JR_cond(af.bytes.f & 0b01111111);
                     break;
                 case 0x1://LD HL, d16
                     LD_d16(de.bytes.d, de.bytes.e);
@@ -483,8 +549,8 @@
                     pc.pc+=1;
                     pc.pc+=4;
                     break;
-                case 0x8: //JR Z, r8
-                    JR(af.bytes.f & 0b10000000);
+                case 0x8: //JR_cond Z, r8
+                    JR_cond(af.bytes.f & 0b10000000);
                     break; 
                 case 0x9://ADD HL, HL (- 0 H C)
                     ADD(hl.hl, hl.hl);
@@ -570,8 +636,8 @@
                     pc.pc+=1;
                     cycles+=4;
                     break;
-                case 0x8://JR C,r8
-                    JR(af.bytes.f & 0b00010000);
+                case 0x8://JR_cond C,r8
+                    JR_cond(af.bytes.f & 0b00010000);
                     break; 
                 case 0x9://ADD HL,SP (- 0 H C)
                     ADD(hl.hl, sp.sp);
@@ -1044,20 +1110,40 @@
                         pc.bytes.c = Bus->read(sp.sp);
                         pc.bytes.p = Bus->read(sp.sp+=1);
                         sp.sp+=1;
-                        cycles+=20
+                        cycles+=20;
                     } else {
-                        pc+=1;
+                        pc.pc+=1;
                         cycles+=8;
                     }
                     break;
                 case 0x1:
-                        bc.bytes.c = Bus->read(sp.sp);
-                        bc.bytes.b = Bus->read(sp.sp+=1);
-                        sp.sp+=1;
-                        cycles+=8;
-                        break;
+                    bc.bytes.c = Bus->read(sp.sp);
+                    bc.bytes.b = Bus->read(sp.sp+=1);
+                    sp.sp+=1;
+                    cycles+=8;
+                    break;
                 case 0x2:
-                    
+                    JP_cond(!(af.bytes.f & 0b10000000));
+                    break;
+                case 0x3:
+                    pc.bytes.c = Bus->read(pc.pc+1);
+                    pc.bytes.p = Bus->read(pc.pc+2);
+                    pc.pc+=3;
+                    cycles+=4;
+                    break;
+                case 0x4:
+                    CALL_cond(!(af.bytes.f & 0b10000000));
+                    break;
+                case 0x5:
+                    JP();
+                    break;
+                case 0x6:
+                    CALL_cond(!(af.bytes.f & 0b10000000));
+                    break;
+                case 0x7
+
+
+
 
 
             }

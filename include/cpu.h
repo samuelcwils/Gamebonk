@@ -22,8 +22,16 @@ private:
     void LD_REG_HL(uint8_t &reg);
     void LD_ADDRESS_A(uint16_t address);
     void LD_A_ADDRESS(uint16_t address);
-     
-    void JR(bool flag);
+    
+    void JP();
+    void JR();
+    void JP_cond(bool flag);
+    void JR_cond(bool flag);
+    
+    void POP(uint8_t &high, uint8_t &low);
+    void PUSH(uint8_t &high, uint8_t &low);
+    void CALL();
+    void CALL_cond(bool flag);
     
     void ADD(uint16_t &a, uint16_t b);
     void ADD(uint8_t &a, uint8_t b);
@@ -88,7 +96,7 @@ private:
         uint8_t p;
         } bytes;
         uint16_t pc;
-    } pc; //register de 
+    } pc; //register pc 
 
 public:
     cpu(bus* Bus);

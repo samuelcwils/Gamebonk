@@ -108,7 +108,7 @@
         cycles+=8;
     }
 
-    void cpu::JP()
+    void cpu::JP_a16()
     {
         uint16_t temp = pc.pc;
         pc.bytes.c = Bus->read(temp+1);
@@ -138,14 +138,14 @@
     {
         if(flag)
         {
-            JP();
+            JP_a16();
         } else {
             pc.pc+=3;
             cycles+=12;
         }
     }
 
-    void cpu::POP(uint8_t &high, uint8_t &low)
+    void cpu::POP_16b(uint8_t &high, uint8_t &low)
     {
         low = Bus->read(sp.sp);
         high = Bus->read(sp.sp+=1);
@@ -154,7 +154,7 @@
         cycles+=12;
     }
 
-    void cpu::PUSH(uint8_t high, uint8_t low)
+    void cpu::PUSH_16b(uint8_t high, uint8_t low)
     {
         sp.sp--;
         Bus->write(sp.sp, high);
@@ -191,7 +191,10 @@
 
     void cpu::RST(uint8_t H)
     {
-        PUSH(pc.bytes.p, pc.bytes.c);
+        sp.sp--;
+        Bus->write(sp.sp, pc.bytes.p);
+        sp.sp--;
+        Bus->write(sp.sp, pc.bytes.c);  
         pc.pc = 0x0000+H;
         cycles+=16;
     }
@@ -534,7 +537,7 @@
         case 0x2:
             switch(opcodeL)
             {
-                case 0x0://JR_cond NZ,r8
+                case 0x0://JR NZ,r8
                     JR_cond(af.bytes.f & 0b01111111);
                     break;
                 case 0x1://LD HL, d16
@@ -574,7 +577,7 @@
                     pc.pc+=1;
                     pc.pc+=4;
                     break;
-                case 0x8: //JR_cond Z, r8
+                case 0x8: //JR Z, r8
                     JR_cond(af.bytes.f & 0b10000000);
                     break; 
                 case 0x9://ADD HL, HL (- 0 H C)
@@ -661,7 +664,7 @@
                     pc.pc+=1;
                     cycles+=4;
                     break;
-                case 0x8://JR_cond C,r8
+                case 0x8://JR C,r8
                     JR_cond(af.bytes.f & 0b00010000);
                     break; 
                 case 0x9://ADD HL,SP (- 0 H C)
@@ -1142,7 +1145,7 @@
                     }
                     break;
                 case 0x1://POP BC
-                    POP(bc.bytes.b, bc.bytes.c);
+                    POP_16b(bc.bytes.b, bc.bytes.c);
                     break;
                 case 0x2://JP NZ,a16
                     JP_cond(!(af.bytes.f & 0b10000000));
@@ -1157,7 +1160,7 @@
                     CALL_cond(!(af.bytes.f & 0b10000000));
                     break;
                 case 0x5://PUSH BC
-                    PUSH(bc.bytes.b, bc.bytes.c);
+                    PUSH_16b(bc.bytes.b, bc.bytes.c);
                     break;
                 case 0x6://ADD A,d8
                     ADD(af.bytes.a, Bus->read(pc.pc+1));
@@ -1201,7 +1204,7 @@
                     RET_cond(!(af.bytes.f & 0b10000000));
                     break;
                 case 0x1://POP DE
-                    POP(de.bytes.d, de.bytes.e);
+                    POP_16b(de.bytes.d, de.bytes.e);
                     break;
                 case 0x2://JP NC,a16
                     JP_cond(!(af.bytes.f & 0b00010000));
@@ -1211,8 +1214,8 @@
                 case 0x4://CALL NC,a16
                     CALL_cond(!(af.bytes.f & 0b00010000));
                     break;
-                case 0x5://PUSH DE
-                    PUSH(bc.bytes.b, bc.bytes.c);
+                case 0x5://PUSH_ DE
+                    PUSH_16b(bc.bytes.b, bc.bytes.c);
                     break;
                 case 0x6://SUB d8 (Z 1 H C)
                     SUB(af.bytes.a, Bus->read(pc.pc+1));
@@ -1251,12 +1254,12 @@
             switch(opcodeL)
             {
                 case 0x0://LD (a8), A
-                    Bus->write((Bus->read(pc.pc+1)), af.bytes.a);
+                    Bus->write((Bus->read(pc.pc+1))+0xff00, af.bytes.a);
                     pc.pc+=2;
                     cycles+=12;
                     break;
                 case 0x1://POP HL
-                    POP(hl.bytes.h, hl.bytes.l);
+                    POP_16b(hl.bytes.h, hl.bytes.l);
                     break;
                 case 0x2://LD (C),A
                     Bus->write((0xff00+bc.bytes.c), af.bytes.a);
@@ -1265,23 +1268,46 @@
                     break;
                 case 0x4://NO OP
                     break;
-                case 0x5:
-                    PUSH(hl.bytes.h, hl.bytes.l);
+                case 0x5://PUSH HL
+                    PUSH_16b(hl.bytes.h, hl.bytes.l);
                     break;
-                case 0x6:
+                case 0x6://AND d8
                     AND(af.bytes.a, Bus->read(pc.pc+1));
                     break;
-                case 0x7:
+                case 0x7://RST 00h
                     RST(20);
                     break;
-                case 0x8:
+                case 0x8://ADD SP, r8
                     ADD(sp.sp, (int)(Bus->read(pc.pc+1)));
                     pc.pc+=1; // extra for this instruction
                     cycles+=8; //
                     break;
-                case 0x9:
+                case 0x9://JP HL
+                    pc.pc = hl.hl;
+                    cycles+=4;
+                    break;
+                case 0xa://LD (a16),A
+                    uint16_t a16;
+                    a16 |= Bus->read(pc.pc+1);//get low byte
+                    a16 |= (Bus->read(pc.pc+2) << 8); // get high byte
+                    Bus->write(a16, af.bytes.a);
+                    pc.pc+=2;
+                    cycles+=12;
+                    break;
+                case 0xb://NO OP
+                    break;
+                case 0xc://NO OP
+                    break;
+                case 0xd://NO OP
+                    break;
+                case 0xe:
+                    XOR(af.bytes.a, Bus->read(pc.pc+1));
+                    pc.pc+=1; //extra
+                    break;
+                case 0xf:
+                    RST()
+
                     
-                case 0xa:
                     
 
 

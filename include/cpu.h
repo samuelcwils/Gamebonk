@@ -23,13 +23,13 @@ private:
     void LD_ADDRESS_A(uint16_t address);
     void LD_A_ADDRESS(uint16_t address);
     
-    void JP();
+    void JP_a16();
     void JR();
     void JP_cond(bool flag);
     void JR_cond(bool flag);
     
-    void POP(uint8_t &high, uint8_t &low);
-    void PUSH(uint8_t high, uint8_t low);
+    void POP_16b(uint8_t &high, uint8_t &low);
+    void PUSH_16b(uint8_t high, uint8_t low);
     void CALL();
     void CALL_cond(bool flag);
 

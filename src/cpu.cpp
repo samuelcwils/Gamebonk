@@ -1168,7 +1168,7 @@
                     cycles+=4;
                     break;
                 case 0x7://RST 00H
-                    RST(0);
+                    RST(0x00);
                     break;
                 case 0x8://RET Z
                     RET_cond(af.bytes.f & 0b10000000);
@@ -1192,7 +1192,7 @@
                     pc.pc+=1; //extra byte for this instruction
                     break;
                 case 0xf://RST 08H
-                    RST(8);
+                    RST(0x08);
                     break;
             }
             break;
@@ -1222,7 +1222,7 @@
                     pc.pc+=1;//extra byte for this instruction
                     break;
                 case 0x7://RST 10H
-                    RST(10);
+                    RST(0x10);
                     break;
                 case 0x8://RET C
                     RET_cond(bc.bytes.c);
@@ -1245,7 +1245,7 @@
                     pc.pc+=1; //extra byte for this instruction
                     break;
                 case 0xf://RST 18H
-                    RST(18);
+                    RST(0x18);
                     break;
             }
             break;
@@ -1275,7 +1275,7 @@
                     AND(af.bytes.a, Bus->read(pc.pc+1));
                     break;
                 case 0x7://RST 00h
-                    RST(20);
+                    RST(0x20);
                     break;
                 case 0x8://ADD SP, r8
                     ADD(sp.sp, (int)(Bus->read(pc.pc+1)));
@@ -1300,19 +1300,50 @@
                     break;
                 case 0xd://NO OP
                     break;
-                case 0xe:
+                case 0xe://XOR d8
                     XOR(af.bytes.a, Bus->read(pc.pc+1));
                     pc.pc+=1; //extra
                     break;
-                case 0xf:
-                    RST()
+                case 0xf://RST 28H
+                    RST(0x28);
+                    break;
+            }
+            break;
+        
+        case 0xf:
+            switch(opcodeL)
+            {
+                case 0x0://LDH A,(a8)
+                    af.bytes.a = (Bus->read(pc.pc+1)) + 0xff00;
+                    pc.pc+=2;
+                    cycles+=12;
+                    break;
+                case 0x1://POP AF
+                    POP_16b(af.bytes.a, af.bytes.f);
+                    break;
+                case 0x2://LD A,(C)
+                    af.bytes.a = (Bus->read(0xff00 + bc.bytes.c));
+                    break;
+                case 0x3://DI disables interrupts after one instruction after DI TODO needs interrupts
+                    break;
+                case 0x4:
+                    break;//NO OP
+                case 0x5://PUSH AF
+                    PUSH_16b(af.bytes.a, af.bytes.f);
+                    break;
+                case 0x6://OR d8
+                    OR(af.bytes.a, Bus->read(pc.pc+1));
+                    pc.pc+=1;
+                    break;
+                case 0x7://RST 30H
+                    RST(0x30);
+                    break;
+                case 0x8:
+                    LD
 
-                    
-                    
 
-
-
-
+                
+                
 
 
 

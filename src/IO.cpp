@@ -1,4 +1,4 @@
-#include "Emulator_SDL.h"
+#include "IO.h"
 
 chip8_IO::chip8_IO()
 {
@@ -65,6 +65,7 @@ void chip8_IO::keyInput(bool* controller)
 							SDL_Quit();
 							exit(0);
 							break;
+						
 					}
 
 				break;

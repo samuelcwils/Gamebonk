@@ -1324,7 +1324,7 @@
                 case 0x2://LD A,(C)
                     af.bytes.a = (Bus->read(0xff00 + bc.bytes.c));
                     break;
-                case 0x3://DI disables interrupts after one instruction after DI TODO needs interrupts
+                case 0x3://DI disables interrupts after one instruction after itself TODO needs interrupts
                     break;
                 case 0x4:
                     break;//NO OP
@@ -1338,29 +1338,45 @@
                 case 0x7://RST 30H
                     RST(0x30);
                     break;
-                case 0x8:
-                    LD
-
-
-                
-                
-
-
-
-
-
+                case 0x8://LD HL,SP+r8
+                    hl.hl = sp.sp + Bus->read(pc.pc+1);
+                    pc.pc+=2;
+                    cycles+=12;
+                    break;
+                case 0x9://LD SP,HL
+                    sp.sp = hl.hl;
+                    pc.pc+=1;
+                    cycles+=8;
+                    break;
+                case 0xa://LD A,(a16)
+                    uint16_t a16;
+                    a16 |= Bus->read(pc.pc+1);//get low byte
+                    a16 |= (Bus->read(pc.pc+2) << 8); // get high byte
+                    af.bytes.a = Bus->read(a16);
+                    pc.pc+=3;
+                    cycles+=16;
+                    break;
+                case 0xb://EI enables interrupts after one instruction after itself TODO needs interrupts
+                    break;
+                case 0xc://NO OP
+                    break;
+                case 0xd://NO OP
+                    break;
+                case 0xe:
+                    CP(af.bytes.a, Bus->read(pc.pc+1));
+                    pc.pc+=1;
+                    cycles+=4; // extra for this instruction
+                    break;
+                case 0xf:
+                    RST(0x38);
+                    break;       
             }
+            break;
             
-
-
-
-
         default:
             printf("INVALID OPCODE\n");
-            pc.pc++;
             break;
         }
-
 
     }
    

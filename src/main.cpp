@@ -20,9 +20,13 @@ int main()
 
     cpu* CPU = new cpu(Bus);
 
-    CPU->execOP();
-
     cartridge->printCart();
+
+    while(true)
+    {
+        CPU->execOP();
+        
+    }
 
     printf("INITIALIZING\n");
 

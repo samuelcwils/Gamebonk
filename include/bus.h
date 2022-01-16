@@ -3,6 +3,7 @@
 #include "cart.h"
 #include "ppu.h"
 #include "stdint.h"
+#include "cpu.h"
 
 class bus {
 private:

@@ -52,7 +52,20 @@ private:
     void INC(uint8_t &byte);
     void DEC(uint16_t &value);
     void DEC(uint8_t &byte);
-
+    
+    void RLC(uint8_t &byte);
+    void RRC(uint8_t &byte);
+    void RL(uint8_t &byte);
+    void RR(uint8_t &byte);
+    void SLA(uint8_t &byte);
+    void SRA(uint8_t &byte);
+    void SWAP(uint8_t &byte);
+    void SRL(uint8_t &byte);
+    
+    void BIT(uint8_t &byte, uint8_t bitNum); //bitNum should be entered as binary (ex: bit 5 is 0b00100000 )
+    
+    void RES(uint8_t &byte, uint8_t bitNum); //bitNum should be entered as binary (ex: bit 5 is 0b00100000 )
+    void SET(uint8_t &byte, uint8_t bitNum); //bitNum should be entered as binary (ex: bit 5 is 0b00100000 )
 
     union {
         struct{ 
@@ -103,7 +116,13 @@ private:
     } pc; //register pc 
 
 public:
+    
+    bool IME;
+    uint8_t IE;
+    uint8_t IF;
+
     cpu(bus* Bus);
+    void checkInterrupts();
     void execOP();
 
 };

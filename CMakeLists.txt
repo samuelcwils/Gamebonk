@@ -13,9 +13,10 @@ add_executable(${PROJECT_NAME}
 	src/main.cpp
 	src/bus.cpp
 	src/cart.cpp
+	src/opcodes.cpp
 	src/cpu.cpp
 	src/ppu.cpp	
-	src/Emulator_SDL.cpp
+	src/IO.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})

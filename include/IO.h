@@ -1,8 +1,10 @@
 #pragma once
 #include "SDL2/SDL.h"
+#include <array>
 #include <iostream>
+#include "cpu.h"
 
-class chip8_IO
+class IO
 {
 	private:
 		int w; //window width
@@ -11,11 +13,7 @@ class chip8_IO
 		int gw; //game screen width
 		int gh; //game screen
 
-		struct {
-			bool IME;
-			std::array <bool, 5> IE;
-			std::array <bool, 5> IF;
-		} interrupts;
+		bool* interrupts;
 
 		SDL_Window* window;
 		SDL_Renderer* renderer;
@@ -23,8 +21,8 @@ class chip8_IO
 		SDL_Event event;
 
 	public:
-		SDL_IO();
-		~SDL_IO();
+		IO(bool* interrupts);
+		~IO();
 
 		void createWindow(int input_w, int input_h, int input_gw, int input_gh);
 

@@ -28,23 +28,25 @@ uint8_t bus::read(uint16_t address)
     } else if(address <= 0xdfff){
 
         return wRam[address-0xc000];
+    
+    } else if(address <= 0xedff){
+
+        return wRam[address-0xe000];//echo of work ram
 
     } else if(address <= 0xfe9f){
 
-        return memoryMap.PPU->oam[address - 0xe000];
+        return memoryMap.PPU->oam[address - 0xee00];
 
     } else if(address <= 0xff4b){
 
-        return 0;
+        return 0; //TODO need IO
 
     } else if(address <= 0xfffe){
 
-        return hRam[address - 0xe0a0];
+        return hRam[address - 0xff7f];
 
     } else if(address == 0xffff){
-
-
-
+        return CPU->
     }
 
 

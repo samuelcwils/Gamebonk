@@ -1,14 +1,15 @@
 #include "IO.h"
 
-chip8_IO::chip8_IO()
+IO::IO(bool* interrupts)
+{
+	this->interrupts = interrupts;
+}
+
+IO::~IO()
 {
 }
 
-chip8_IO::~chip8_IO()
-{
-}
-
-void chip8_IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
+void IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
 {
 	w = input_w;
 	h = input_h;
@@ -41,7 +42,7 @@ void chip8_IO::createWindow(int input_w, int input_h, int input_gw, int input_gh
 	}
 }
 
-void chip8_IO::keyInput(bool* controller)
+void IO::keyInput(bool* controller)
 {
 		if (SDL_PollEvent(&event))
 		{
@@ -65,6 +66,10 @@ void chip8_IO::keyInput(bool* controller)
 							SDL_Quit();
 							exit(0);
 							break;
+
+						case SDLK_z:
+							interrupts[4] = 1;
+							break;
 						
 					}
 
@@ -78,7 +83,7 @@ void chip8_IO::keyInput(bool* controller)
 
 }
 
-void chip8_IO::updateDisplay(uint32_t* srcBuffer, int srcWidth)
+void IO::updateDisplay(uint32_t* srcBuffer, int srcWidth)
 {
 	SDL_UpdateTexture(gameScreen, NULL, srcBuffer, srcWidth * (sizeof(uint32_t)));
 	SDL_RenderClear(renderer);

@@ -14,7 +14,7 @@ public:
     char title[16];
     uint8_t cartType;
     uint16_t cartRamSize;
-    uint8_t cartRam[0x2000]; //switchable bank, if any
+    uint8_t cartRam[0x2000]; //Accessed as one bank TODO SWITCHABLE BANK
 
     union{
         struct{

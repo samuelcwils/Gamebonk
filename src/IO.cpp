@@ -1,6 +1,6 @@
 #include "IO.h"
 
-IO::IO(bool* interrupts)
+IO::IO(uint8_t interrupts)
 {
 	this->interrupts = interrupts;
 }
@@ -15,7 +15,7 @@ void IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
 	h = input_h;
 
 
-	window = SDL_CreateWindow("Chip8", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow("Gamebonk", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_RESIZABLE);
 
 	renderer = SDL_CreateRenderer(window, -1, 0);
 
@@ -42,7 +42,7 @@ void IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
 	}
 }
 
-void IO::keyInput(bool* controller)
+void IO::keyInput()
 {
 		if (SDL_PollEvent(&event))
 		{
@@ -68,7 +68,7 @@ void IO::keyInput(bool* controller)
 							break;
 
 						case SDLK_z:
-							interrupts[4] = 1;
+							//interrupts[4] = 1;
 							break;
 						
 					}

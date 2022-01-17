@@ -11,8 +11,8 @@ void cpu::Zflag(uint16_t a, uint16_t b)
 
     void cpu::Hflag(uint8_t a, uint8_t b)
     {
-        if(((a & 0xf) + (b & 0xf)) & 0x10){
-            af.bytes.f |= 0b01000000;
+        if(((a & 0x0f) + (b & 0x0f)) & 0x10){
+            af.bytes.f |= 0b00100000;
         } else {
             af.bytes.f &= 0b11011111;
         }
@@ -21,9 +21,18 @@ void cpu::Zflag(uint16_t a, uint16_t b)
     void cpu::Hflag(uint16_t a, uint16_t b)
     {
         if((((a >> 8) & 0xf) + ((b >> 8) & 0xf)) & 0x10){ 
-            af.bytes.f |= 0b01000000;
+            af.bytes.f |= 0b00100000;
         } else {
             af.bytes.f &= 0b11011111;
+        }
+    }
+
+    void cpu::Hflag_sub(uint8_t a, uint8_t b)
+    {
+        if(((a & 0x0f) + (b & 0x0f)) & 0x10){
+            af.bytes.f &= 0b11011111;
+        } else {
+            af.bytes.f |= 0b00100000;
         }
     }
 
@@ -44,6 +53,16 @@ void cpu::Zflag(uint16_t a, uint16_t b)
             af.bytes.f |= 0b00010000;
         } else{
             af.bytes.f &= 0b11101111;
+        }
+    }
+
+    void cpu::Cflag_sub(uint8_t a, uint8_t b)
+    {
+        int temp = (a + b) >> 8;
+        if(temp){
+            af.bytes.f &= 0b11101111;
+        } else{
+            af.bytes.f |= 0b00010000;
         }
     }
 
@@ -107,8 +126,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
 
     void cpu::JR()
     {
-        pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
-        pc.pc+=2;
+        pc.pc += (signed char)((Bus->read(pc.pc+1)));
         cycles+=12;  
     }
 
@@ -246,8 +264,8 @@ void cpu::Zflag(uint16_t a, uint16_t b)
     {
         Zflag(a, -b);
         af.bytes.f |= 0b01000000; //N flag
-        Hflag(a, -b);
-        Cflag(a, -b);
+        Hflag_sub(a, -b);
+        Cflag_sub(a, -b);
         a -= b;
         pc.pc+=1;
         cycles+=4;      
@@ -258,8 +276,8 @@ void cpu::Zflag(uint16_t a, uint16_t b)
         uint8_t temp = (b + (af.bytes.f & 0x00010000));
         Zflag(a, -temp);
         af.bytes.f |= 0b01000000; //N flag
-        Hflag(a, -temp);
-        Cflag(a, -temp);
+        Hflag_sub(a, -temp);
+        Cflag_sub(a, -temp);
         a -= temp; 
         pc.pc+=1;
         cycles+=4;       
@@ -312,8 +330,11 @@ void cpu::Zflag(uint16_t a, uint16_t b)
     {
         Zflag(a, -b);
         af.bytes.f |= 0b01000000; //N flag
-        Hflag(a, -b);
-        Cflag(a, -b);
+        Hflag_sub(a, -b);
+        if(a < b)
+        {
+            af.bytes.f |= 0b00100000;
+        }
         pc.pc+=1;
         cycles+=4;
     }
@@ -347,7 +368,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
     {
         Zflag(byte, -1);
         af.bytes.f |= 0b01000000;
-        Cflag(byte, -1);
+        Hflag_sub(byte, -1);
         byte-=1;
         pc.pc+=1;
         cycles+=4;
@@ -576,11 +597,17 @@ void cpu::Zflag(uint16_t a, uint16_t b)
 
     void cpu::execOP()
     {
+        //////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////
         uint8_t opcode = Bus->read(pc.pc);
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
 
-        printf("%0x : \n \t %0x\n", pc.pc, opcode);
+      //  printf("%04x : \t", pc.pc); //print pc
+      //  printf("af: %04x bc: %04x de: %04x hl: %04x sp: %04x\n", af.af, bc.bc, de.de, hl.hl, sp.sp);
+       // printf("\t %0x\n", opcode);
 
         switch (opcodeH)
         {
@@ -708,10 +735,10 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                 switch(opcodeL)
                 {
                     case 0x0://JR NZ,r8
-                        JR_cond(af.bytes.f & 0b01111111);
+                        JR_cond(!(af.bytes.f & 0b10000000));
                         break;
                     case 0x1://LD HL, d16
-                        LD_d16(de.bytes.d, de.bytes.e);
+                        LD_d16(hl.bytes.h, hl.bytes.l);
                         break;
                     case 0x2://LD (HL+), A
                         LD_ADDRESS_A(hl.hl);
@@ -782,16 +809,8 @@ void cpu::Zflag(uint16_t a, uint16_t b)
             case 0x3:
                 switch(opcodeL)
                 {
-                    case 0x0://LD NC,s8
-                        if(!(af.bytes.f & 0b00010000))
-                        {
-                            pc.pc += (signed char)((Bus->read(pc.pc+2)+(pc.pc+1)));
-                            pc.pc+=2;
-                            cycles+=12;  
-                        } else {
-                            pc.pc+=2;
-                            cycles+=8;
-                        }
+                    case 0x0://JR NC,r8
+                        JR_cond(!(af.bytes.f & 0b10000000));
                     case 0x1://LD SP,d16
                         LD_d16(sp.bytes.s, sp.bytes.p);
                         break;
@@ -818,7 +837,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         uint8_t temp = Bus->read(hl.hl);
                         Zflag(temp, -1);
                         af.bytes.f |= 0b01000000; //N flag
-                        Hflag(temp, -1);
+                        Hflag_sub(temp, -1);
                         temp--;
                         Bus->write(hl.hl, temp);
                         pc.pc+=1;

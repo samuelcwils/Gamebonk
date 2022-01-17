@@ -2,18 +2,20 @@
 #include <stdint.h>
 #include "bus.h"
 
+class bus;
 class cpu {
 
 private:
-    bus* Bus;
-    uint8_t cycles; //counts up cycles then emulates speed 
+    bus* Bus; 
 
     void emulateCycles();
     void Zflag(uint16_t a, uint16_t b); 
     void Hflag(uint8_t a, uint8_t b); 
     void Hflag(uint16_t a, uint16_t b); 
+    void Hflag_sub(uint8_t a, uint8_t b);
     void Cflag(uint8_t a, uint8_t b);
     void Cflag(uint16_t a, uint16_t b);
+    void Cflag_sub(uint8_t a, uint8_t b);
 
     void LD_d16(uint8_t &high, uint8_t &low);
     void LD_d8(uint8_t &byte);
@@ -120,6 +122,8 @@ public:
     bool IME;
     uint8_t IE;
     uint8_t IF;
+
+    uint8_t cycles; //counts up cycles then emulates speed
 
     cpu(bus* Bus);
     void checkInterrupts();

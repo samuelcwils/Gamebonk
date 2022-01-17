@@ -13,7 +13,8 @@ class IO
 		int gw; //game screen width
 		int gh; //game screen
 
-		bool* interrupts;
+		uint8_t interrupts;
+		uint8_t joypad;
 
 		SDL_Window* window;
 		SDL_Renderer* renderer;
@@ -21,14 +22,14 @@ class IO
 		SDL_Event event;
 
 	public:
-		IO(bool* interrupts);
+		IO(uint8_t interrupts);
 		~IO();
 
 		void createWindow(int input_w, int input_h, int input_gw, int input_gh);
 
 		void updateDisplay(uint32_t* srcBuffer, int srcWidth);
 
-		void keyInput(bool* controller);
+		void keyInput();
 
 		void playSound();
 };

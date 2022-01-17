@@ -8,16 +8,10 @@
         bc.bc = 0;
         de.de = 0;
         sp.sp = 0;
-        pc.pc = 0x0150;
+        pc.pc = 0x0;
     }
 
     void cpu::checkInterrupts()
     {
-
-    }
-
-    void cpu::emulateCycles()
-    {
-        
 
     }

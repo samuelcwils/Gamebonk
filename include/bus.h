@@ -1,9 +1,13 @@
 #pragma once
+#include "cpu.h"
 #include "array"
 #include "cart.h"
 #include "ppu.h"
 #include "stdint.h"
-#include "cpu.h"
+
+class cart;
+class ppu;
+class cpu;
 
 class bus {
 private:
@@ -14,10 +18,12 @@ private:
     {
         cart* Cart;
         ppu* PPU;
+        cpu* CPU;
     } memoryMap;
     
 public:
     bus(cart* Cart, ppu* PPU);
+    void connectCPU(cpu* CPU);
     void write(uint16_t address, uint8_t byte);
     uint8_t read(uint16_t address);
 };

@@ -9,6 +9,8 @@
 extern "C" INCBIN(Game, "gameboy.gb"); 
 
 using namespace std::chrono_literals;
+using namespace std::chrono;
+
 
 int main()
 {      
@@ -38,41 +40,36 @@ int main()
 
     while(true)
     {
-
-        using namespace std::chrono;
-        
-        auto start = high_resolution_clock::now();
+        auto Start = high_resolution_clock::now(); 
         
         CPU->execOP();
-        
-        auto stop = high_resolution_clock::now(); 
-        auto duration = duration_cast<nanoseconds>(stop - start);
 
-        auto waitTime = 2400ns - duration - 140ns;
-  
-        printf("duration is : %ld\n", duration.count());
+        auto Stop = high_resolution_clock::now(); 
 
-       // auto waitTime = CPU->cycles;
+        CPU->cycles /= 4; //get cpu cycles from machine cycles
         
-        for(CPU->cycles; CPU->cycles > 0; CPU->cycles--)
+        while(CPU->cycles > 0)
         {
             CPU->checkInterrupts();
+            
             //update timers() //TODO
+            
             ppuClock++;
             SDL_Timer++;
             
-            if( (ppuClock % 2) == 0 ){
-                //run ppu
-            }
+            //ppu
+            //sdl
 
-            //if(SDL_Timer % 1000)
-
-            auto waitTime = 2400ns - duration;
-
-            //std::cout << waitTime.count() << std::endl;             
+            CPU->cycles--;
         }
+        
+        
 
-       // std::this_thread::sleep_for((waitTime)); //140 is for the time it takes to measure
+        auto Duration = duration_cast<nanoseconds>(Stop - Start); //get delay of compute time for instruction
+
+        std::cout << Duration.count() << std::endl;  
+
+        std::this_thread::sleep_for(2386ns - Duration); //sleep for clock speed minus delay
    
     }
 

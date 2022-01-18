@@ -27,7 +27,9 @@ class IO
 
 		void createWindow(int input_w, int input_h, int input_gw, int input_gh);
 
-		void updateDisplay(uint32_t* srcBuffer, int srcWidth);
+		uint8_t* convertBuffer(uint8_t* srcBuffer);
+
+		void updateDisplay(uint8_t* srcBuffer, int srcWidth);
 
 		void keyInput();
 

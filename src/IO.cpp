@@ -14,12 +14,14 @@ void IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
 	w = input_w;
 	h = input_h;
 
+	gw = input_gw;
+	gh = input_gh;
 
 	window = SDL_CreateWindow("Gamebonk", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_RESIZABLE);
 
 	renderer = SDL_CreateRenderer(window, -1, 0);
 
-	gameScreen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, gw, gh);
+	gameScreen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STREAMING, gw, gh);
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
@@ -83,9 +85,10 @@ void IO::keyInput()
 
 }
 
-void IO::updateDisplay(uint32_t* srcBuffer, int srcWidth)
+
+void IO::updateDisplay(uint8_t* srcBuffer, int srcWidth)
 {
-	SDL_UpdateTexture(gameScreen, NULL, srcBuffer, srcWidth * (sizeof(uint32_t)));
+	SDL_UpdateTexture(gameScreen, NULL, srcBuffer, srcWidth * (sizeof(uint8_t)));
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, gameScreen, NULL, NULL);
 	SDL_RenderPresent(renderer);

@@ -19,7 +19,7 @@ void bus::write(uint16_t address, uint8_t byte)
 
     } else if(address <= 0x9fff){
 
-        memoryMap.PPU->vRam[address - 0x8000] = byte;
+        memoryMap.PPU->vRam.vRam[address - 0x8000] = byte;
 
     } else if(address <= 0xbfff){
 
@@ -62,7 +62,7 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address <= 0x9fff){
 
-        return memoryMap.PPU->vRam[address - 0x8000];
+        return memoryMap.PPU->vRam.vRam[address - 0x8000];
 
     } else if(address <= 0xbfff){
 

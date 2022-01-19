@@ -6,6 +6,8 @@ ppu::ppu()
     {
         frameBuffer[i] = 0;
     }
+
+    LDC.LY = 147;
 }
 
 void ppu::drawTile(int x, int y, int index)

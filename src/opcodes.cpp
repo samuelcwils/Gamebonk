@@ -126,7 +126,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
 
     void cpu::JR()
     {
-        pc.pc += (signed char)((Bus->read(pc.pc+1)));
+        pc.pc += (signed char)Bus->read(pc.pc+1) + 2;
         cycles+=12;  
     }
 
@@ -573,8 +573,8 @@ void cpu::Zflag(uint16_t a, uint16_t b)
             af.bytes.f &= 0b01111111;  
         }
 
-        af.bytes.f &= 0b101111111;
-        af.bytes.f |= 0b001000000;  
+        af.bytes.f &= 0b10111111;
+        af.bytes.f |= 0b00100000;  
 
         pc.pc+=1;
         cycles+=4;
@@ -605,9 +605,10 @@ void cpu::Zflag(uint16_t a, uint16_t b)
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
 
-      //  printf("%04x : \t", pc.pc); //print pc
-      //  printf("af: %04x bc: %04x de: %04x hl: %04x sp: %04x\n", af.af, bc.bc, de.de, hl.hl, sp.sp);
-       // printf("\t %0x\n", opcode);
+        printf("%04x : \t", pc.pc); //print pc
+        printf("af: %04x bc: %04x de: %04x hl: %04x sp: %04x", af.af, bc.bc, de.de, hl.hl, sp.sp); //print regs
+        printf(" z: %i, n: %i, h: %i, c: %i\n", af.bytes.f & 0b10000000, af.bytes.f & 0b01000000, af.bytes.f & 0b00100000, af.bytes.f & 0b00010000);
+        printf("\t %0x\n", opcode);
 
         switch (opcodeH)
         {
@@ -662,6 +663,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         break;
                     case 0xe: //LD C, d8
                         LD_d8(bc.bytes.c);
+                        break;
                     case 0xf: //RRCA (0 0 0 A0)
                         RRC(af.bytes.a);
                         break;
@@ -690,7 +692,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                     case 0x2://LD DE, a
                         LD_ADDRESS_A(de.bytes.d);
                     case 0x3://INC DE
-                    INC(de.de);
+                        INC(de.de);
                         break;
                     case 0x4://INC D (Z 0 H -)
                         INC(de.bytes.d);
@@ -708,10 +710,10 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         JR();
                         break;
                     case 0x9://ADD HL, DE
-                        ADD(hl.hl, bc.bc);
+                        ADD(hl.hl, de.de);
                         break;
                     case 0xa://LD A, (DE)
-                        LD_A_ADDRESS(bc.bc);
+                        LD_A_ADDRESS(de.de);
                         break;
                     case 0xb://DEC DE
                         DEC(de.de);
@@ -1085,6 +1087,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         break;
                     case 0x7://LD (HL),A
                         LD_HL_REG(af.bytes.a);
+                        break;
                     case 0x8://LD A,B
                         LD_REG1_REG2(af.bytes.a, bc.bytes.b);
                         break;
@@ -1385,15 +1388,15 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         JP_cond(af.bytes.f & 0b10000000);
                         break;
                     case 0xb://PREFIX CB TODO LATER
-                        goto cb;
                         pc.pc+=1;
                         cycles+=4;
+                        goto cb;
                         break;
                     case 0xc://CALL Z,a16
                         CALL_cond(af.bytes.f & 0b10000000);
                         break;
-                    case 0xd://CALL a16
-                        CALL();
+                    case 0xd://CALL Carry, a16
+                        CALL_cond(af.bytes.f & 0b00010000);
                         break;
                     case 0xe://ADC A,d8
                         ADC(af.bytes.a, Bus->read(pc.pc+1));
@@ -1472,6 +1475,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         break;
                     case 0x2://LD (C),A
                         Bus->write((0xff00+bc.bytes.c), af.bytes.a);
+                        pc.pc+=1;
                         break;
                     case 0x3://NO OP
                         break;
@@ -2112,6 +2116,7 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                         BIT(af.bytes.a, 0b10000000);
                         break;
                 }
+                break;
 
             case 0x8:
                 switch(opcodeL)

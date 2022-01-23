@@ -1,8 +1,9 @@
 #include "cart.h"
 
-cart::cart(uint8_t* rom, uint32_t romSize)
+cart::cart(uint8_t* rom, uint8_t* bootRom, uint32_t romSize)
 {
     this->rom = rom;
+    this->bootRom = bootRom;
     this->romSize = romSize;
     
     for(int i = 0; i < 16; i++) //sets title
@@ -17,12 +18,8 @@ cart::cart(uint8_t* rom, uint32_t romSize)
     } else {
         cartRamSize = 0;
     }
-   
-    switch(cartType) //no mappers yet
-    {
-        case 0x00:
-            noMapperLoad();
-    }
+
+    bootRomLoad();
 
 }
 
@@ -36,7 +33,7 @@ void cart::printCart()
 
 void cart::noMapperLoad()
 {
-    for(int i = 0; i < 0x4000; i++){
+    for(int i = 0x0100; i < 0x4000; i++){
         staticBank[i] = rom[i];
     }
 
@@ -45,3 +42,21 @@ void cart::noMapperLoad()
     }
 
 }
+
+void cart::bootRomLoad()
+{
+    for(int i = 0; i < 256; i++)
+    {
+        staticBank[i] = bootRom[i];
+    }
+}
+
+void cart::romLoad()
+{
+    switch(cartType) //no mappers yet
+    {
+        case 0x00:
+            noMapperLoad();
+    }
+}
+

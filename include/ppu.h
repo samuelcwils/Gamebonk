@@ -2,7 +2,9 @@
 #include "stdint.h"
 #include "IO.h"
 #include "bus.h"
+#include "cpu.h"
 
+class cpu;
 class Bus;
 class IO;
 
@@ -31,6 +33,7 @@ public:
             uint8_t OBP1; //FF49
             uint8_t OBP0; //FF48
             uint8_t BGP;  //FF47
+            uint8_t dma;
             uint8_t LYC;  //FF45
             uint8_t LY;   //FF44
             uint8_t SCX;  //FF43
@@ -38,21 +41,30 @@ public:
             uint8_t STAT; //FF41
             uint8_t LCDC; //FF40
         } bytes;
-        
+        uint8_t regs[12];
+
     } regs;
 
-    enum statusMode {
-	hBlank   = 0,
-	vBlank   = 1,
-	OAM      = 2,
-	Transfer = 3,
-    };
-
-
     ppu();
+
+    void connectCPU(cpu* CPU);
+
+    void tick();
 
     void drawTile(int x, int y, int index);
 
     void drawTiles(); //debug thing
+
+private:
+    
+    enum {
+	hBlank   = 0,
+	vBlank   = 1,
+	OAM      = 2,
+	Transfer = 3,
+    } statusMode;
+
+    int ticks;
+    cpu* CPU;
 
 };

@@ -5,9 +5,10 @@
 class cart{
 
     uint8_t* rom;
+    uint8_t* bootRom;
 
 public:
-    cart(uint8_t* rom, uint32_t romSize);
+    cart(uint8_t* rom, uint8_t* bootRom, uint32_t romSize);
 
 
     uint32_t romSize;
@@ -25,6 +26,10 @@ public:
     };
 
     void printCart();
+
+    void bootRomLoad();
+
+    void romLoad();
 
 private:
     void noMapperLoad();

@@ -7,12 +7,61 @@ ppu::ppu()
         frameBuffer[i] = 0;
     }
 
-    LDC.LY = 147;
+    statusMode = OAM;
+    regs.bytes.LY = 0;
+    ticks = 0;
+}
+
+void ppu::connectCPU(cpu* CPU)
+{
+    this->CPU = CPU;
+}
+
+void ppu::tick()
+{
+    ticks++;
+
+    switch(statusMode)
+    {
+        case OAM:
+            if(ticks == 40){
+                statusMode = Transfer;
+            }
+            break;
+        
+        case Transfer:
+            if(ticks == 160){
+                statusMode = hBlank;
+            }
+            break;
+        
+        case hBlank:
+            if(ticks == 456)
+            {
+                ticks = 0; 
+                regs.bytes.LY++;
+           
+            } else if(regs.bytes.LY == 144)
+            {
+                statusMode = vBlank;
+            }
+            break;
+        
+        case vBlank:
+            if(ticks == 456){ticks = 0; regs.bytes.LY++;}
+            if(regs.bytes.LY == 153){
+                regs.bytes.LY = 0; 
+                statusMode = OAM;
+                CPU->IF |= 0b00000001;
+            }
+            break;
+    }
+
 }
 
 void ppu::drawTile(int x, int y, int index)
 {
-    uint8_t tile[8][8];
+    uint8_t tile[8][8] = {0};
 
     for(int tileLine = 0; tileLine < 16; tileLine+=2)
     {

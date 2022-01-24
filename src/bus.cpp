@@ -39,7 +39,7 @@ void bus::write(uint16_t address, uint8_t byte)
     
     } else if(address <= 0xff4b){
 
-        memoryMap.PPU->regs.regs[(address - 0xff39)]; //TODO need IO
+        memoryMap.PPU->regs.regs[(address - 0xff40)]; //TODO need IO
 
     } else if(address <= 0xff7e){
 
@@ -47,7 +47,7 @@ void bus::write(uint16_t address, uint8_t byte)
 
     } else if(address <= 0xfffe){
 
-        hRam[address - 0xff7f] = byte;
+        hRam[address - 0xff81] = byte;
 
     } else if(address == 0xffff){
         
@@ -58,9 +58,8 @@ void bus::write(uint16_t address, uint8_t byte)
 }
 
 uint8_t bus::read(uint16_t address)
-{
-   
-   if(address <= 0x7fff)
+{   
+    if(address <= 0x7fff)
     {
         return memoryMap.Cart->romBank[address];
 
@@ -86,7 +85,7 @@ uint8_t bus::read(uint16_t address)
     
     } else if(address <= 0xff4b){
 
-        return memoryMap.PPU->regs.regs[(address - 0xff39)]; //TODO need IO
+        return memoryMap.PPU->regs.regs[(address - 0xff40)]; //TODO need IO
 
     } else if(address <= 0xff7e){
 
@@ -94,7 +93,7 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address <= 0xfffe){
 
-        return hRam[address - 0xff7f];
+        return hRam[address - 0xff81];
 
     } else if(address == 0xffff){
         

@@ -1395,8 +1395,8 @@ void cpu::Zflag(uint16_t a, uint16_t b)
                     case 0xc://CALL Z,a16
                         CALL_cond(af.bytes.f & 0b10000000);
                         break;
-                    case 0xd://CALL Carry, a16
-                        CALL_cond(af.bytes.f & 0b00010000);
+                    case 0xd://CALL a16
+                        CALL();
                         break;
                     case 0xe://ADC A,d8
                         ADC(af.bytes.a, Bus->read(pc.pc+1));

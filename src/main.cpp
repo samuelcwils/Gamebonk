@@ -113,7 +113,7 @@ int main()
         auto Stop = high_resolution_clock::now(); 
         auto Duration = duration_cast<nanoseconds>(Stop - Start); //get delay of compute time for instruction
 
-       // std::cout << Duration.count() << std::endl;  
+        //std::cout << Duration.count() << std::endl;  
 
         //std::this_thread::sleep_for((2386ns * CPU->cycles) - Duration); //sleep for clock speed minus delay
         

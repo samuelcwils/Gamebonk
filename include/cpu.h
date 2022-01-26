@@ -9,7 +9,7 @@ private:
     bus* Bus; 
 
     void emulateCycles();
-    void Zflag(uint16_t a, uint16_t b); 
+    void Zflag(uint16_t a, int b); 
     void Hflag(uint8_t a, uint8_t b); 
     void Hflag(uint16_t a, uint16_t b); 
     void Hflag_sub(uint8_t a, uint8_t b);

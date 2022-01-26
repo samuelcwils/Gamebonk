@@ -1,6 +1,6 @@
 #include "cpu.h"
 
-void cpu::Zflag(uint16_t a, uint16_t b)
+void cpu::Zflag(uint16_t a, int b)
     {
         if(!(a+b)){ //Z flag
             af.bytes.f |= 0b10000000;
@@ -173,12 +173,15 @@ void cpu::Zflag(uint16_t a, uint16_t b)
 
     void cpu::CALL()
     {
-        sp.sp--;
-        Bus->write(sp.sp, pc.bytes.p);
-        sp.sp--;
-        Bus->write(sp.sp, pc.bytes.c);
+        uint16_t temp = 0;
+        temp = pc.pc + 3;
         
-        uint16_t temp = pc.pc;
+        sp.sp--;
+        Bus->write(sp.sp, temp & 0xff00);
+        sp.sp--;
+        Bus->write(sp.sp, temp & 0x00ff);
+        
+        temp = pc.pc;
 
         pc.bytes.c = Bus->read(temp+1);
         pc.bytes.p = Bus->read(temp+2);
@@ -604,11 +607,21 @@ void cpu::Zflag(uint16_t a, uint16_t b)
         uint8_t opcode = Bus->read(pc.pc);
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
+        
+        static bool debug = 1;
+        
+        if(debug)
+        {
+            printf("%04x : \t", pc.pc); //print pc
+            printf("af: %04x bc: %04x de: %04x hl: %04x sp: %04x", af.af, bc.bc, de.de, hl.hl, sp.sp); //print regs
+            printf(" z: %i, n: %i, h: %i, c: %i\n", af.bytes.f & 0b10000000, af.bytes.f & 0b01000000, af.bytes.f & 0b00100000, af.bytes.f & 0b00010000);
+            printf("\t %0x\n", opcode);
+        }
 
-        printf("%04x : \t", pc.pc); //print pc
-        printf("af: %04x bc: %04x de: %04x hl: %04x sp: %04x", af.af, bc.bc, de.de, hl.hl, sp.sp); //print regs
-        printf(" z: %i, n: %i, h: %i, c: %i\n", af.bytes.f & 0b10000000, af.bytes.f & 0b01000000, af.bytes.f & 0b00100000, af.bytes.f & 0b00010000);
-        printf("\t %0x\n", opcode);
+        if(pc.pc == 0x02b)
+        {
+
+        }
 
         switch (opcodeH)
         {

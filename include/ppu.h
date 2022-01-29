@@ -28,18 +28,18 @@ public:
 
     union{
         struct {
-            uint8_t WX;   //FF4B
-            uint8_t WY;   //FF4A
-            uint8_t OBP1; //FF49
-            uint8_t OBP0; //FF48
-            uint8_t BGP;  //FF47
-            uint8_t dma;
-            uint8_t LYC;  //FF45
-            uint8_t LY;   //FF44
-            uint8_t SCX;  //FF43
-            uint8_t SCY;  //FF42
-            uint8_t STAT; //FF41
             uint8_t LCDC; //FF40
+            uint8_t STAT; //FF41
+            uint8_t SCY;  //FF42
+            uint8_t SCX;  //FF43
+            uint8_t LY;   //FF44
+            uint8_t LYC;  //FF45
+            uint8_t dma;
+            uint8_t BGP;  //FF47
+            uint8_t OBP0; //FF48
+            uint8_t OBP1; //FF49
+            uint8_t WY;   //FF4A
+            uint8_t WX;   //FF4B   
         } bytes;
         uint8_t regs[12];
 

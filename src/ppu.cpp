@@ -40,6 +40,7 @@ void ppu::tick()
             {
                 ticks = 0; 
                 regs.bytes.LY++;
+                statusMode = OAM;
            
             } else if(regs.bytes.LY == 144)
             {

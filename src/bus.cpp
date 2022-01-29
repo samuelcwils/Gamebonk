@@ -39,7 +39,7 @@ void bus::write(uint16_t address, uint8_t byte)
     
     } else if(address <= 0xff4b){
 
-        memoryMap.PPU->regs.regs[(address - 0xff40)]; //TODO need IO
+        memoryMap.PPU->regs.regs[(address - 0xff40)] = byte; //TODO need IO
 
     } else if(address <= 0xff7e){
 

@@ -46,7 +46,37 @@ public:
 
     } regs;
 
-    ppu();
+    int xPos;
+
+    enum {
+	hBlank   = 0,
+	vBlank   = 1,
+	OAM      = 2,
+	Transfer = 3,
+    };
+
+    enum {
+    getTile  = 0,
+    line0    = 1,
+    line1    = 2,
+    idle     = 3,
+    };
+
+    std::queue<uint8_t> FIFO; 
+
+    struct{
+        uint8_t lowLine;
+        uint8_t highLine;
+        uint8_t fullLine[8];
+
+        int state;
+        int tileID;
+        int tileLine;
+        uint16_t tileRowAddr;
+        uint8_t tileCollumn;
+    } fetcher;
+
+    ppu(bus* Bus);
 
     void connectCPU(cpu* CPU);
 

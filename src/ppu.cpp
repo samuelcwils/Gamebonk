@@ -1,6 +1,6 @@
 #include "ppu.h"
 
-ppu::ppu()
+ppu::ppu(bus* Bus)
 {
     for(int i = 0; i < sizeof(frameBuffer); i++)
     {

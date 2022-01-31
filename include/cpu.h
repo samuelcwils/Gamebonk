@@ -123,6 +123,8 @@ public:
     uint8_t IE;
     uint8_t IF;
 
+    bool bootromDone;
+
     uint8_t cycles; //counts up cycles then emulates speed
 
     cpu(bus* Bus);

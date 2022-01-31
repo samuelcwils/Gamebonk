@@ -29,7 +29,7 @@ void cpu::Zflag(uint16_t a, int b)
 
     void cpu::Hflag_sub(uint8_t a, uint8_t b)
     {
-        if(((a & 0x0f) + (b & 0x0f)) & 0x10){
+        if((((a & 0xf) - (b & 0xf)))  < 0){
             af.bytes.f &= 0b11011111;
         } else {
             af.bytes.f |= 0b00100000;
@@ -58,7 +58,7 @@ void cpu::Zflag(uint16_t a, int b)
 
     void cpu::Cflag_sub(uint8_t a, uint8_t b)
     {
-        int temp = (a + b) >> 8;
+        int temp = (a - b) >> 8;
         if(temp){
             af.bytes.f &= 0b11101111;
         } else{
@@ -267,8 +267,8 @@ void cpu::Zflag(uint16_t a, int b)
     {
         Zflag(a, -b);
         af.bytes.f |= 0b01000000; //N flag
-        Hflag_sub(a, -b);
-        Cflag_sub(a, -b);
+        Hflag_sub(a, b);
+        Cflag_sub(a, b);
         a -= b;
         pc.pc+=1;
         cycles+=4;      
@@ -279,8 +279,8 @@ void cpu::Zflag(uint16_t a, int b)
         uint8_t temp = (b + (af.bytes.f & 0x00010000));
         Zflag(a, -temp);
         af.bytes.f |= 0b01000000; //N flag
-        Hflag_sub(a, -temp);
-        Cflag_sub(a, -temp);
+        Hflag_sub(a, temp);
+        Cflag_sub(a, temp);
         a -= temp; 
         pc.pc+=1;
         cycles+=4;       
@@ -331,12 +331,16 @@ void cpu::Zflag(uint16_t a, int b)
 
     void cpu::CP(uint8_t &a, uint8_t b)
     {
-        Zflag(a, -b);
+        if(a == b){
+            af.bytes.f |= 0b10000000;
+        } else {
+            af.bytes.f &= 0b01111111;
+        }
         af.bytes.f |= 0b01000000; //N flag
-        Hflag_sub(a, -b);
+        Hflag_sub(a, b);
         if(a < b)
         {
-            af.bytes.f |= 0b00100000;
+            af.bytes.f |= 0b00010000;
         }
         pc.pc+=1;
         cycles+=4;
@@ -371,7 +375,7 @@ void cpu::Zflag(uint16_t a, int b)
     {
         Zflag(byte, -1);
         af.bytes.f |= 0b01000000;
-        Hflag_sub(byte, -1);
+        Hflag_sub(byte, 1);
         byte-=1;
         pc.pc+=1;
         cycles+=4;
@@ -608,7 +612,7 @@ void cpu::Zflag(uint16_t a, int b)
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
         
-        static bool debug = 1;
+        static bool debug = 0;
         
         if(debug)
         {
@@ -618,9 +622,9 @@ void cpu::Zflag(uint16_t a, int b)
             printf("\t %0x\n", opcode);
         }
 
-        if(pc.pc == 0x02b)
+        if(pc.pc == 0x00fa)
         {
-
+            bootromDone = true;
         }
 
         switch (opcodeH)
@@ -852,7 +856,7 @@ void cpu::Zflag(uint16_t a, int b)
                         uint8_t temp = Bus->read(hl.hl);
                         Zflag(temp, -1);
                         af.bytes.f |= 0b01000000; //N flag
-                        Hflag_sub(temp, -1);
+                        Hflag_sub(temp, 1);
                         temp--;
                         Bus->write(hl.hl, temp);
                         pc.pc+=1;
@@ -1540,7 +1544,7 @@ void cpu::Zflag(uint16_t a, int b)
                 switch(opcodeL)
                 {
                     case 0x0://LDH A,(a8)
-                        af.bytes.a = (Bus->read(pc.pc+1)) + 0xff00;
+                        af.bytes.a = (Bus->read( (Bus->read(pc.pc+1)) + 0xff00) );
                         pc.pc+=2;
                         cycles+=12;
                         break;
@@ -1594,7 +1598,7 @@ void cpu::Zflag(uint16_t a, int b)
                         break;
                     case 0xd://NO OP
                         break;
-                    case 0xe:
+                    case 0xe://CP d8
                         CP(af.bytes.a, Bus->read(pc.pc+1));
                         pc.pc+=1;
                         cycles+=4; // extra for this instruction

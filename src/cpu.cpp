@@ -12,6 +12,7 @@
         IF = 0;
         IE = 0;
         IME = 0;
+        bootromDone = false;
 
     }
 

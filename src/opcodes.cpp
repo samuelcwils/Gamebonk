@@ -1517,13 +1517,15 @@ void cpu::Zflag(uint16_t a, int b)
                         cycles+=4;
                         break;
                     case 0xa://LD (a16),A
-                        uint16_t a16;
+                    {
+                        uint16_t a16 = 0;
                         a16 |= Bus->read(pc.pc+1);//get low byte
                         a16 |= (Bus->read(pc.pc+2) << 8); // get high byte
                         Bus->write(a16, af.bytes.a);
-                        pc.pc+=2;
+                        pc.pc+=3;
                         cycles+=12;
                         break;
+                    }
                     case 0xb://NO OP
                         break;
                     case 0xc://NO OP

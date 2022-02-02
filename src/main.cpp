@@ -17,6 +17,7 @@ unsigned long totalCycles = 0;
 
 
 
+
 int main()
 {     
     int frames = 0;
@@ -28,6 +29,9 @@ int main()
 
     bus* Bus = new bus(cartridge, PPU);
     cpu* CPU = new cpu(Bus);
+
+    IO* io = new IO(CPU->IF, framebuffer);
+    io->createWindow(1024, 512, 160, 144);
     
     PPU->connectBus(Bus);
     Bus->connectCPU(CPU);
@@ -97,12 +101,14 @@ int main()
                 }
             }
 
+            io->updateDisplay();
             auto stop = high_resolution_clock::now(); 
             auto waitTime = std::chrono::duration_cast<microseconds>(stop - start);
 
             frameDone = true;
             
             std::cout << waitTime.count() << std::endl;
+
             std::this_thread::sleep_for(16666us - waitTime);
 
             PPU->frameDone = false;

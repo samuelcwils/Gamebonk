@@ -30,43 +30,52 @@ void ppu::fetch()
             break;
         
         case line1:
+        {
             fetcher.highLine = Bus->read(0x8000 + (fetcher.tileID * 16) + (fetcher.tileLine * 2) + 1);
             
             for(int i = 0; i < 8; i++)
             {
-                fetcher.fullLine[i] = (fetcher.highLine & ((0b00000001 << i) << 1)) + (fetcher.lowLine & (0b00000001 << i));
+                fetcher.fullLine[7 - i] = ((fetcher.highLine & ((0b00000001 << i) << 1)) + (fetcher.lowLine & (0b00000001 << i))) >> i;
             }
             
-            if(FIFO.size() == 8 || FIFO.size() == 0){ 
+            int fifoSize = FIFO.size();
+            if(fifoSize == 8 || fifoSize == 0){ 
                 for(int i = 0; i < 8; i++){
                     FIFO.push(fetcher.fullLine[i]);
-                    fetcher.state = getTile;
+
                 }
+                fetcher.state = getTile;
+                fetcher.tileCollumn++;
             } else {
                 fetcher.state = idle;
             }
             break;
-        
+        }
         case idle:
-            if(FIFO.size() == 8 || FIFO.size() == 0){ 
+        {
+            int fifoSize = FIFO.size();
+            if(fifoSize == 8 || fifoSize == 0){ 
                 for(int i = 0; i < 8; i++){
                     FIFO.push(fetcher.fullLine[i]);
-                    fetcher.state = getTile;
                 }
+                fetcher.tileCollumn++;
+                fetcher.state = getTile;
             }
             break;
+        }
     }
 
 }
 
 int ppu::getColorID(int colorIndex) //returns a color ID for a given pixel
 {
-    return ((regs.bytes.BGP & (0b00000011 << (colorIndex * 2)) >> (colorIndex * 2)));
+    return (((regs.bytes.BGP & (0b00000011 << (colorIndex * 2))) >> (colorIndex * 2)));
 }
 
 uint16_t ppu::getPixel()
 {
     int fifoSize = FIFO.size();
+    int fifoFront = FIFO.front();
     int colorID = getColorID(FIFO.front());
  
     switch(colorID)
@@ -99,45 +108,42 @@ void ppu::tick()
     ticks++;
 
     statusMode = regs.bytes.STAT & 0b00000011;
-    regs.bytes.SCY = 0;
 
     switch(statusMode)
     {
         case OAM:
             if(ticks == 160){
-                fetcher.tileLine = regs.bytes.LY + regs.bytes.SCY % 8;
-                fetcher.tileRowAddr = 0x9800 + (((regs.bytes.LY + regs.bytes.SCY)/8) * 32);
+                fetcher.tileLine = (regs.bytes.LY + regs.bytes.SCY) % 8;
+                fetcher.tileRowAddr = 0x9800 + ( ((regs.bytes.LY + regs.bytes.SCY)/8) * 32);
                 
                 for(int i = FIFO.size(); i > 0; i--) //clear FIFO from last line
                 {
                     FIFO.pop();
                 }
 
+                fetcher.state = 0;
+                fetcher.tileCollumn = 0;
                 regs.bytes.STAT &= 0b11111100;
                 regs.bytes.STAT |= Transfer;
             }
             break;
         
         case Transfer:
-        {
             fetch();
-            int FIFOsize = FIFO.size();
 
             if(!(ticks % 2) && (FIFO.size() > 8)){
-                frameBuffer[(regs.bytes.LY * 159) + xPos] = getPixel();
+                frameBuffer[(regs.bytes.LY * 160) + xPos] = getPixel();
                 FIFO.pop();
                 xPos++;
-                fetcher.tileCollumn = (xPos - 1) / 8;
             }
 
-            if(xPos == 160){
+            if(xPos == 159){
                 xPos = 0;
                
                 regs.bytes.STAT &= 0b11111100;
                 regs.bytes.STAT |= hBlank;
             }
             break;
-        }
         case hBlank:
             if(ticks == 912)
             {

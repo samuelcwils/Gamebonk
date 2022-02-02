@@ -14,10 +14,10 @@ public:
     
     union{
         struct{
-            uint8_t tileData[0x17ff];
+            uint8_t tileData[0x1800];
             struct{
-                uint8_t map1[0x3ff];
-                uint8_t map2[0x3ff];
+                uint8_t map1[0x400];
+                uint8_t map2[0x400];
             } maps;
         } blocks;
         uint8_t vRam[0x2000];

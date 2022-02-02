@@ -9,7 +9,7 @@ include_directories(${PROJECT_NAME}
 	external/incbin/
 )
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 add_executable(${PROJECT_NAME}
 	src/main.cpp

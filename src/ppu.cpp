@@ -1,16 +1,8 @@
 #include "ppu.h"
 
-ppu::ppu(bus* Bus)
-{
-    for(int i = 0; i < sizeof(frameBuffer); i++)
-    {
-        frameBuffer[i] = 0;
-    }
-
-    statusMode = OAM;
-    regs.regs = {};
-    xPos = 0;
-    ticks = 0;
+ppu::ppu()
+{  
+    regs.bytes.LY = 0;
 }
 
 void ppu::connectBus(bus* Bus)
@@ -45,9 +37,8 @@ void ppu::fetch()
                 fetcher.fullLine[i] = (fetcher.highLine & ((0b00000001 << i) << 1)) + (fetcher.lowLine & (0b00000001 << i));
             }
             
-            if(FIFO.size() == 8){ 
+            if(FIFO.size() == 8 || FIFO.size() == 0){ 
                 for(int i = 0; i < 8; i++){
-                    fetcher.tileCollumn++;
                     FIFO.push(fetcher.fullLine[i]);
                     fetcher.state = getTile;
                 }
@@ -57,8 +48,7 @@ void ppu::fetch()
             break;
         
         case idle:
-            if(FIFO.size() == 8){ 
-                fetcher.tileCollumn++;
+            if(FIFO.size() == 8 || FIFO.size() == 0){ 
                 for(int i = 0; i < 8; i++){
                     FIFO.push(fetcher.fullLine[i]);
                     fetcher.state = getTile;
@@ -71,11 +61,12 @@ void ppu::fetch()
 
 int ppu::getColorID(int colorIndex) //returns a color ID for a given pixel
 {
-    return (regs.bytes.BGP & (0b00000011 << (colorIndex * 2)))
+    return ((regs.bytes.BGP & (0b00000011 << (colorIndex * 2)) >> (colorIndex * 2)));
 }
 
 uint16_t ppu::getPixel()
 {
+    int fifoSize = FIFO.size();
     int colorID = getColorID(FIFO.front());
  
     switch(colorID)
@@ -95,6 +86,10 @@ uint16_t ppu::getPixel()
         case 3:
             return 0x0160;
             break;
+
+        default:
+            return 0;
+            break;
     }
 
 }
@@ -104,58 +99,83 @@ void ppu::tick()
     ticks++;
 
     statusMode = regs.bytes.STAT & 0b00000011;
+    regs.bytes.SCY = 0;
 
     switch(statusMode)
     {
         case OAM:
-            if(ticks == 40){
+            if(ticks == 160){
                 fetcher.tileLine = regs.bytes.LY + regs.bytes.SCY % 8;
-                fetcher.tileRowAddr = 0x9800 + ((regs.bytes.LY + regs.bytes.SCY / 8) * 32);
-                fetcher.tileCollumn = 0;
+                fetcher.tileRowAddr = 0x9800 + (((regs.bytes.LY + regs.bytes.SCY)/8) * 32);
                 
                 for(int i = FIFO.size(); i > 0; i--) //clear FIFO from last line
                 {
                     FIFO.pop();
                 }
-                
+
+                regs.bytes.STAT &= 0b11111100;
                 regs.bytes.STAT |= Transfer;
             }
             break;
         
         case Transfer:
+        {
             fetch();
+            int FIFOsize = FIFO.size();
 
-            if(!(ticks % 2)){
+            if(!(ticks % 2) && (FIFO.size() > 8)){
                 frameBuffer[(regs.bytes.LY * 159) + xPos] = getPixel();
                 FIFO.pop();
                 xPos++;
+                fetcher.tileCollumn = (xPos - 1) / 8;
             }
 
             if(xPos == 160){
+                xPos = 0;
+               
+                regs.bytes.STAT &= 0b11111100;
                 regs.bytes.STAT |= hBlank;
             }
             break;
-        
+        }
         case hBlank:
-            if(ticks == 456)
+            if(ticks == 912)
             {
                 ticks = 0; 
                 regs.bytes.LY++;
-                regs.bytes.STAT |= OAM;
+
+                if(regs.bytes.LY == 144)
+                {
+                    CPU->IF |= 0b00000001; //sends vblank interrupt
+                    
+                    regs.bytes.STAT &= 0b11111100;
+                    regs.bytes.STAT |= vBlank;
                 
-            } else if(regs.bytes.LY == 144)
-            {
-                regs.bytes.STAT |= vBlank;
+                } else {
+                        regs.bytes.STAT &= 0b11111100;
+                        regs.bytes.STAT |= OAM;
+                }
+
             }
             break;
         
         case vBlank:
-            if(ticks == 456){ticks = 0; regs.bytes.LY++;}
-            if(regs.bytes.LY == 153){
-                regs.bytes.LY = 0; 
-                regs.bytes.STAT |= OAM;
-                CPU->IF |= 0b00000001;
+            if(ticks == 912)
+            {
+                ticks = 0; 
+                regs.bytes.LY++;
+                
+                if(regs.bytes.LY == 153)
+                {
+                    regs.bytes.LY = 0; 
+                    
+                    regs.bytes.STAT &= 0b11111100;
+                    regs.bytes.STAT |= OAM;
+                    
+                    frameDone = true;
+                }
             }
+
             break;
     }
 

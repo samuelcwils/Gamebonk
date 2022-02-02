@@ -1,8 +1,9 @@
 #include "IO.h"
 
-IO::IO(uint8_t interrupts)
+IO::IO(uint8_t interrupts, uint16_t* framebuffer)
 {
 	this->interrupts = interrupts;
+	SrcBuffer = framebuffer;
 }
 
 IO::~IO()
@@ -21,7 +22,7 @@ void IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
 
 	renderer = SDL_CreateRenderer(window, -1, 0);
 
-	gameScreen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB332, SDL_TEXTUREACCESS_STREAMING, gw, gh);
+	gameScreen = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, gw, gh);
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
@@ -46,7 +47,7 @@ void IO::createWindow(int input_w, int input_h, int input_gw, int input_gh)
 
 void IO::keyInput()
 {
-		if (SDL_PollEvent(&event))
+		if(SDL_PollEvent(&event))
 		{
 			switch (event.type)
 			{
@@ -86,9 +87,9 @@ void IO::keyInput()
 }
 
 
-void IO::updateDisplay(uint8_t* srcBuffer, int srcWidth)
+void IO::updateDisplay()
 {
-	SDL_UpdateTexture(gameScreen, NULL, srcBuffer, srcWidth * (sizeof(uint8_t)));
+	SDL_UpdateTexture(gameScreen, NULL, SrcBuffer, gw * (sizeof(uint16_t)));
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, gameScreen, NULL, NULL);
 	SDL_RenderPresent(renderer);

@@ -15,7 +15,12 @@ using namespace std::chrono;
 bool frameDone = false;
 unsigned long totalCycles = 0;
 
-
+void doSDL(IO* io)
+{
+    if(frameDone){
+        io->updateDisplay();
+    }
+}
 
 
 int main()
@@ -37,12 +42,11 @@ int main()
     Bus->connectCPU(CPU);
     PPU->connectCPU(CPU);
 
-   // std::thread render(renderSDL, io, PPU);
+   std::thread SDL(doSDL, io);
 
     cartridge->printCart();
 
-    ////////////////////////////////////////////////////////////////
-    //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM 
+    //////////////////////////////////////////////////////////////////boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM 
 
     cartridge->romLoad(); //(load rom then overlay bootrom)
     cartridge->bootRomLoad();
@@ -99,6 +103,95 @@ int main()
                     
                     CPU->cycles--;
                 }
+
+                if(!(totalCycles % 1000))
+                {
+                    io->keyInput();
+                }
+            }
+
+            io->updateDisplay();
+            auto stop = high_resolution_clock::now(); 
+            auto waitTime = std::chrono::duration_cast<microseconds>(stop - start);
+
+            frameDone = true;
+            
+            std::cout << waitTime.count() << std::endl;
+
+            //std::this_thread::sleep_for(16666us - waitTime);
+
+            PPU->frameDone = false;
+            
+            frames++;
+            totalCycles = 0;
+        }
+
+    }
+    
+    //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM 
+    /////////////////////////////////////////////////////////////////////////////
+
+  
+  
+    //////////////////////////////////////////////////////////////////////////////
+    //rest of ROM //rest of ROM //rest of ROM //rest of ROM //rest of ROM
+        cartridge->romLoad(); //(replace bootrom)
+        CPU->pc.pc = 0x0100;
+        CPU->debug = true;
+        if(!(PPU->regs.bytes.LCDC & 0b10000000)) //doesn't tick ppu while not enabled
+        {
+            CPU->checkInterrupts();
+            CPU->execOP();
+            
+            CPU->cycles /= 4; //get cpu cycles from machine cycles 
+
+            while(CPU->cycles > 0)
+            {
+                // if(PPU->regs.bytes.LCDC & 0b10000000)
+                // {
+                //     PPU->tick();
+                //     PPU->tick();
+                // }
+                
+                //update timers() //TODO
+                
+                CPU->cycles--;
+            }
+       
+        } else {
+            
+            auto start = high_resolution_clock::now(); 
+
+            PPU->regs.bytes.STAT |= 0b00000010; //Gets ppu ready to oam
+            
+            while(PPU->frameDone == false) //stops after every frame
+            {
+                
+                CPU->checkInterrupts();
+                CPU->execOP();
+                
+                CPU->cycles /= 4; //get cpu cycles from machine cycles 
+                totalCycles += CPU->cycles;
+
+                while(CPU->cycles > 0)
+                {
+                    if(PPU->regs.bytes.LCDC & 0b10000000)
+                    {
+                        PPU->tick();
+                        PPU->tick();
+                    }
+                    
+                    //update timers() //TODO
+                    
+                    //ppu
+                    
+                    CPU->cycles--;
+                }
+
+                if(!(totalCycles % 1000))
+                {
+                    io->keyInput();
+                }
             }
 
             io->updateDisplay();
@@ -117,49 +210,6 @@ int main()
             totalCycles = 0;
         }
 
-    }
-
-
-    while(true)
-    {
-        printf("done\n");
-
-    }
-    
-    //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM 
-    /////////////////////////////////////////////////////////////////////////////
-
-  
-  
-    //////////////////////////////////////////////////////////////////////////////
-    //rest of ROM //rest of ROM //rest of ROM //rest of ROM //rest of ROM
-    cartridge->romLoad(); //(replace bootrom)
-    unsigned long long cycleAmount = 4200000 * 50;
-    while(cycleAmount > 0)
-    {
-        auto Start = high_resolution_clock::now(); 
-        
-        CPU->checkInterrupts();
-        CPU->execOP();
-
-        CPU->cycles /= 4; //get cpu cycles from machine cycles 
-        while(CPU->cycles > 0)
-        {
-            if(PPU->regs.bytes.LCDC & 0b10000000)
-            {
-                PPU->tick();
-                PPU->tick();
-            }
-            
-            //update timers() //TODO
-             
-            //ppu
-            
-            CPU->cycles--;
-        }
-        
-        cycleAmount--;
-    }
     //rest of ROM //rest of ROM //rest of ROM //rest of ROM //rest of ROM
     //////////////////////////////////////////////////////////////////////////////
 

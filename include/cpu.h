@@ -109,6 +109,9 @@ private:
         uint16_t sp;
     } sp; //register sp
     
+
+public:
+    
     union {
         struct{ 
         uint8_t c;
@@ -117,7 +120,7 @@ private:
         uint16_t pc;
     } pc; //register pc 
 
-public:
+    bool debug = 0;
     
     bool IME;
     uint8_t IE;

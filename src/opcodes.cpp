@@ -612,8 +612,6 @@ void cpu::Zflag(uint16_t a, int b)
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
         
-        static bool debug = 0;
-        
         if(debug)
         {
             printf("%04x : \t", pc.pc); //print pc

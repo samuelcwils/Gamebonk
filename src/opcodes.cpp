@@ -1,14 +1,14 @@
 #include "cpu.h"
 
-void cpu::Zflag(uint16_t a, int b)
-    {
-        if(!(a+b)){ //Z flag
-            af.bytes.f |= 0b10000000;
-        } else {
-            af.bytes.f &= 0b01111111;
-        }     
-    }
-
+    void cpu::Zflag(uint16_t a, int b)
+        {
+            if(!(a+b) || ( (a+b) >= 256) ){ //Z flag
+                af.bytes.f |= 0b10000000;
+            } else {
+                af.bytes.f &= 0b01111111;
+            }     
+        }
+    
     void cpu::Hflag(uint8_t a, uint8_t b)
     {
         if(((a & 0x0f) + (b & 0x0f)) & 0x10){
@@ -177,7 +177,7 @@ void cpu::Zflag(uint16_t a, int b)
         temp = pc.pc + 3;
         
         sp.sp--;
-        Bus->write(sp.sp, temp & 0xff00);
+        Bus->write(sp.sp, (temp & 0xff00) >> 8);
         sp.sp--;
         Bus->write(sp.sp, temp & 0x00ff);
         
@@ -322,7 +322,10 @@ void cpu::Zflag(uint16_t a, int b)
         if(a==0) 
         {
             af.bytes.f |= 0b10000000;//Z Flag
+        } else {
+            af.bytes.f &= 0b01111111;//Z Flag
         }
+
         af.bytes.f &= 0b10001111;//N and H and C flag
         
         pc.pc+=1;
@@ -612,17 +615,24 @@ void cpu::Zflag(uint16_t a, int b)
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
         
+        int x;
+        if(pc.pc == 0x0100 && bootRomDone)
+        {
+            debug = true;
+           // std::cin >> x;
+        }
+
+        if(pc.pc == 0x0100)
+        {
+            bootRomDone = true;
+        }
+
         if(debug)
         {
             printf("%04x : \t", pc.pc); //print pc
             printf("af: %04x bc: %04x de: %04x hl: %04x sp: %04x", af.af, bc.bc, de.de, hl.hl, sp.sp); //print regs
             printf(" z: %i, n: %i, h: %i, c: %i\n", af.bytes.f & 0b10000000, af.bytes.f & 0b01000000, af.bytes.f & 0b00100000, af.bytes.f & 0b00010000);
             printf("\t %0x\n", opcode);
-        }
-
-        if(pc.pc == 0x00fa)
-        {
-            bootromDone = true;
         }
 
         switch (opcodeH)
@@ -1555,7 +1565,7 @@ void cpu::Zflag(uint16_t a, int b)
                         af.bytes.a = (Bus->read(0xff00 + bc.bytes.c));
                         break;
                     case 0x3://DI
-                        IME = 0;
+                        IME = false;
                         pc.pc+=1;
                         cycles+=4;
                         break;
@@ -1590,7 +1600,7 @@ void cpu::Zflag(uint16_t a, int b)
                         cycles+=16;
                         break;
                     case 0xb://EI
-                        IME = 1;
+                        IME = true;
                         pc.pc+=1;
                         cycles+=4;
                         break;

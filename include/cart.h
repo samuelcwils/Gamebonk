@@ -29,9 +29,8 @@ public:
 
     void bootRomLoad();
 
-    void romLoad();
+    void bank0();
 
-private:
-    void noMapperLoad();
+    void bank1();
     
 };

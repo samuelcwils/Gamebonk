@@ -121,12 +121,11 @@ public:
     } pc; //register pc 
 
     bool debug = 0;
+    bool bootRomDone;
     
     bool IME;
     uint8_t IE;
     uint8_t IF;
-
-    bool bootromDone;
 
     uint8_t cycles; //counts up cycles then emulates speed
 

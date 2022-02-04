@@ -19,6 +19,8 @@ cart::cart(uint8_t* rom, uint8_t* bootRom, uint32_t romSize)
         cartRamSize = 0;
     }
 
+    bank0();
+    bank1();
     bootRomLoad();
 
 }
@@ -31,16 +33,18 @@ void cart::printCart()
     printf("The cart's ram size is: %d\n", cartRamSize);
 }
 
-void cart::noMapperLoad()
+void cart::bank0()
 {
-    for(int i = 0x0100; i < 0x4000; i++){
+    for(int i = 0; i < 0x4000; i++){
         staticBank[i] = rom[i];
     }
+}
 
-    for(int i = 00; i < 0x4000; i++){
-        variableBank[i] = rom[i];
+void cart::bank1()
+{
+        for(int i = 0; i < 0x4000; i++){
+        variableBank[i] = rom[i + 0x4000];
     }
-
 }
 
 void cart::bootRomLoad()
@@ -48,15 +52,6 @@ void cart::bootRomLoad()
     for(int i = 0; i < 256; i++)
     {
         staticBank[i] = bootRom[i];
-    }
-}
-
-void cart::romLoad()
-{
-    switch(cartType) //no mappers yet
-    {
-        case 0x00:
-            noMapperLoad();
     }
 }
 

@@ -11,9 +11,7 @@
         pc.pc = 0;
         IF = 0;
         IE = 0;
-        IME = 0;
-        bootromDone = false;
-
+        IME = false;
     }
 
     void cpu::checkInterrupts()
@@ -25,6 +23,8 @@
                 if(IF & (0b00000001))
                 {
                     IF &= 0b11111110;
+                    IME = false;
+                    
                     sp.sp--;
                     Bus->write(sp.sp, pc.bytes.p);
                     sp.sp--;

@@ -14,6 +14,8 @@ private:
     uint8_t wRam[0x2000];
     uint8_t hRam[126];
 
+    uint8_t temp[2];
+
     struct 
     {
         cart* Cart;

@@ -112,7 +112,7 @@ void ppu::tick()
     switch(statusMode)
     {
         case OAM:
-            if(ticks == 160){
+            if(ticks == 80){
                 fetcher.tileLine = (regs.bytes.LY + regs.bytes.SCY) % 8;
                 fetcher.tileRowAddr = 0x9800 + ( ((regs.bytes.LY + regs.bytes.SCY)/8) * 32);
                 
@@ -144,8 +144,9 @@ void ppu::tick()
                 regs.bytes.STAT |= hBlank;
             }
             break;
+       
         case hBlank:
-            if(ticks == 912)
+            if(ticks == 456)
             {
                 ticks = 0; 
                 regs.bytes.LY++;
@@ -166,7 +167,7 @@ void ppu::tick()
             break;
         
         case vBlank:
-            if(ticks == 912)
+            if(ticks == 456)
             {
                 ticks = 0; 
                 regs.bytes.LY++;

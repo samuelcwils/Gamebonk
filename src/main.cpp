@@ -22,14 +22,12 @@ int main()
     cart* cartridge = new cart( (uint8_t*)gRomData, (uint8_t*) gBootData, gRomSize);
    
     ppu* PPU = new ppu();
-    uint16_t framebuffer[160*144];
-    PPU->frameBuffer = framebuffer;
 
     bus* Bus = new bus(cartridge, PPU);
     cpu* CPU = new cpu(Bus);
 
-    IO* io = new IO(CPU->IF, framebuffer);
-    //io->createWindow(1024, 512, 160, 144);
+    IO* io = new IO(CPU->IF, PPU->frameBuffer);
+    io->createWindow(1024, 512, 160, 144);
     
     PPU->connectBus(Bus);
     Bus->connectCPU(CPU);
@@ -38,7 +36,9 @@ int main()
     cartridge->printCart();
 
     ////////////////////////
-    //////////////////////////////////////////boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM 
+    //////////////////////////////////////////boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM
+
+    CPU->bootRomDone = false; 
     
     while(!(CPU->bootRomDone)) //does bootrom then ends
     {
@@ -71,6 +71,7 @@ int main()
             
             while(!(PPU->frameDone) && (CPU->bootRomDone == false)) //stops after every frame
             {
+                CPU->checkInterrupts();
                 CPU->execOP();
 
                 while(CPU->cycles > 0)
@@ -86,8 +87,8 @@ int main()
 
             }
 
-           // io->keyInput();
-            //io->updateDisplay();
+            io->keyInput();
+            io->updateDisplay();
 
             auto stop = high_resolution_clock::now(); 
             auto waitTime = std::chrono::duration_cast<microseconds>(stop - start);
@@ -95,9 +96,9 @@ int main()
             totalCycles = 0;
             frameDone = true;
             
-            std::cout << waitTime.count() << std::endl;
+           // std::cout << waitTime.count() << std::endl;
 
-           // std::this_thread::sleep_for(16666us - waitTime);
+            std::this_thread::sleep_for(16666us - waitTime);
 
             PPU->frameDone = false;
             
@@ -110,7 +111,7 @@ int main()
     //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM //boot ROM 
     /////////////////////////////////////////////////////////////////////////////
 
-    for(int i = 1000; i > 0; i--)
+    for(int i = 2; i > 0; i--)
     {
         printf("REST OF ROM\n");
     }
@@ -118,7 +119,8 @@ int main()
     //////////////////////////////////////////////////////////////////////////////
     //rest of ROM //rest of ROM //rest of ROM //rest of ROM //rest of ROM
     //  
-        cartridge->bank0(); //(replace bootrom)
+        cartridge->staticBankLD(); //(replace bootrom)
+        CPU->pc.pc = 0x100;
 
 while(true)
 {
@@ -130,15 +132,7 @@ while(true)
             CPU->cycles /= 4; //get cpu cycles from machine cycles 
 
             while(CPU->cycles > 0)
-            {
-                // if(PPU->regs.bytes.LCDC & 0b10000000)
-                // {
-                //     PPU->tick();
-                //     PPU->tick();
-                // }
-                
-                //update timers() //TODO
-                
+            {         
                 CPU->cycles--;
             }
        
@@ -174,7 +168,7 @@ while(true)
             totalCycles = 0;
             frameDone = true;
             
-            std::cout << waitTime.count() << std::endl;
+           // std::cout << waitTime.count() << std::endl;
 
             std::this_thread::sleep_for(16666us - waitTime);
 

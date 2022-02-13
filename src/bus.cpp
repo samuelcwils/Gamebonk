@@ -4,6 +4,7 @@ bus::bus(cart* Cart, ppu* PPU)
 {
     memoryMap.Cart = Cart;
     memoryMap.PPU = PPU;
+    joypad = 0xcf;
 }
 
 void bus::connectCPU(cpu* CPU)
@@ -13,9 +14,13 @@ void bus::connectCPU(cpu* CPU)
 
 void bus::write(uint16_t address, uint8_t byte)
 {
-    if(address <= 0x7fff)
+    if(address <= 0x3fff)
     {
-        memoryMap.Cart->romBank[address] = byte;
+        memoryMap.Cart->staticBank[address] = byte;
+
+    } else if(address <= 0x7fff)
+    {
+        memoryMap.Cart->writeRom(address, byte);
 
     } else if(address <= 0x9fff){
 
@@ -23,7 +28,7 @@ void bus::write(uint16_t address, uint8_t byte)
 
     } else if(address <= 0xbfff){
 
-        memoryMap.Cart->cartRam[address - 0xa000] = byte;
+        memoryMap.Cart->ramBank[address - 0xa000] = byte;
 
     } else if(address <= 0xdfff){
 
@@ -37,21 +42,27 @@ void bus::write(uint16_t address, uint8_t byte)
 
         memoryMap.PPU->oam[address - 0xee00] = byte;
 
+    } else if(address == 0xff00){
+
+        joypad = (byte |= (joypad & 0xcf));
+
     } else if(address == 0xff01){
 
-        temp[0] = byte;
+        serial[0] = byte;
 
     } else if(address == 0xff02){
 
-        temp[1] = byte;
+        serial[1] = byte;
+        printf("%c", serial[0]) ;
     
     } else if(address <= 0xff4b){
 
+        if(address == 0xff43)
+        {
+            
+        }
+
         memoryMap.PPU->regs.regs[(address - 0xff40)] = byte; //TODO need IO
-
-    } else if(address <= 0xff7e){
-
-        return; //TODO need IO
 
     } else if(address <= 0xfffe){
 
@@ -67,9 +78,13 @@ void bus::write(uint16_t address, uint8_t byte)
 
 uint8_t bus::read(uint16_t address)
 {   
-    if(address <= 0x7fff)
+    if(address <= 0x3fff)
     {
-        return memoryMap.Cart->romBank[address];
+        return memoryMap.Cart->staticBank[address];
+
+    } else if(address <= 0x7fff)
+    {
+        return memoryMap.Cart->variableBank[address - 0x4000];
 
     } else if(address <= 0x9fff){
 
@@ -91,21 +106,21 @@ uint8_t bus::read(uint16_t address)
 
         return memoryMap.PPU->oam[address - 0xee00];
 
+    } else if(address == 0xff00){
+
+        return joypad;
+
     } else if(address == 0xff01){
 
-        return temp[0];
+        return serial[0];
 
     } else if(address == 0xff02){
 
-        return temp[1];
+        return serial[1];
     
     } else if(address <= 0xff4b){
 
         return memoryMap.PPU->regs.regs[(address - 0xff40)]; //TODO need IO
-
-    } else if(address <= 0xff7e){
-
-        return 0; //TODO need IO
 
     } else if(address <= 0xfffe){
 
@@ -114,9 +129,8 @@ uint8_t bus::read(uint16_t address)
     } else if(address == 0xffff){
         
         return memoryMap.CPU->IE;
-    
+
     }
 
     return 0;
-
 }

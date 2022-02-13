@@ -30,9 +30,9 @@
     void cpu::Hflag_sub(uint8_t a, uint8_t b)
     {
         if((((a & 0xf) - (b & 0xf)))  < 0){
-            af.bytes.f &= 0b11011111;
-        } else {
             af.bytes.f |= 0b00100000;
+        } else {
+            af.bytes.f &= 0b11011111;
         }
     }
 
@@ -60,9 +60,9 @@
     {
         int temp = (a - b) >> 8;
         if(temp){
-            af.bytes.f &= 0b11101111;
-        } else{
             af.bytes.f |= 0b00010000;
+        } else{
+            af.bytes.f &= 0b11101111;
         }
     }
 
@@ -200,11 +200,15 @@
     }
 
     void cpu::RST(uint8_t H)
-    {
+    {      
+        uint16_t temp = 0;
+        temp = pc.pc + 1;
+        
         sp.sp--;
-        Bus->write(sp.sp, pc.bytes.p);
+        Bus->write(sp.sp, (temp & 0xff00) >> 8);
         sp.sp--;
-        Bus->write(sp.sp, pc.bytes.c);  
+        Bus->write(sp.sp, temp & 0x00ff);
+
         pc.pc = 0x0000+H;
         cycles+=16;
     }
@@ -224,6 +228,7 @@
             RET();
             cycles+=4;//extra cycles for condition
         } else {
+            pc.pc+=1;
             cycles +=8;
         }
 
@@ -293,7 +298,10 @@
         if(a==0)
         {
             af.bytes.f |= 0b10000000;//Z Flag
+        } else {
+            af.bytes.f &= 0b01111111;
         }
+
         af.bytes.f |= 0b00100000;//H Flag
         af.bytes.f &= 0b10101111;//N and C flag
         
@@ -341,10 +349,14 @@
         }
         af.bytes.f |= 0b01000000; //N flag
         Hflag_sub(a, b);
+       
         if(a < b)
         {
             af.bytes.f |= 0b00010000;
+        } else {
+            af.bytes.f &= 0b11101111;
         }
+
         pc.pc+=1;
         cycles+=4;
     }
@@ -396,7 +408,7 @@
             af.bytes.f &= 0b11101111;
         }  
 
-        af.bytes.f &= 0b11011111;  
+        af.bytes.f &= 0b10011111;  
 
         if(!byte)
         {
@@ -421,7 +433,7 @@
             af.bytes.f &= 0b11101111;
         }  
 
-        af.bytes.f &= 0b11011111;  
+        af.bytes.f &= 0b10011111;  
 
         if(!byte)
         {
@@ -446,7 +458,7 @@
             af.bytes.f &= 0b11101111;
         } 
        
-        af.bytes.f &= 0b11011111;   
+        af.bytes.f &= 0b10011111;   
 
         if(!byte)
         {
@@ -471,7 +483,7 @@
             af.bytes.f &= 0b11101111;
         } 
 
-        af.bytes.f &= 0b11011111;  
+        af.bytes.f &= 0b10011111;  
 
         if(!byte)
         {
@@ -495,7 +507,7 @@
             af.bytes.f &= 0b11101111;
         }   
 
-        af.bytes.f &= 0b11010000;  
+        af.bytes.f &= 0b10010000;  
 
         if(!byte)
         {
@@ -519,7 +531,7 @@
             af.bytes.f &= 0b11101111;
         }  
 
-        af.bytes.f &= 0b11011111;    
+        af.bytes.f &= 0b10011111;    
         
         if(!byte)
         {
@@ -546,6 +558,7 @@
         }
 
         af.bytes.f &= 0b10001111;  
+        pc.pc+=1;
 
     }
 
@@ -561,7 +574,7 @@
             af.bytes.f &= 0b11101111;
         }       
         
-        af.bytes.f &= 0b11010000;
+        af.bytes.f &= 0b10010000;
 
         if(!byte)
         {
@@ -614,17 +627,17 @@
         uint8_t opcode = Bus->read(pc.pc);
         uint8_t opcodeH = (opcode & 0xF0) >> 4;
         uint8_t opcodeL = opcode & 0x0F;
-        
-        int x;
-        if(pc.pc == 0x0100 && bootRomDone)
-        {
-            debug = true;
-           // std::cin >> x;
-        }
 
         if(pc.pc == 0x0100)
         {
             bootRomDone = true;
+           // debug = true;
+        }
+
+        if(pc.pc == 0x02ed && bootRomDone) //0x028c
+        {
+            bootRomDone = true;
+            //debug = true;
         }
 
         if(debug)
@@ -715,7 +728,8 @@
                         LD_d16(de.bytes.d, de.bytes.e);
                         break;
                     case 0x2://LD DE, a
-                        LD_ADDRESS_A(de.bytes.d);
+                        LD_ADDRESS_A(de.de);
+                        break;
                     case 0x3://INC DE
                         INC(de.de);
                         break;
@@ -753,7 +767,7 @@
                         LD_d8(de.bytes.e);
                         break;
                     case 0xf://RRA (0 0 0 A7)
-                        RL(af.bytes.a);
+                        RR(af.bytes.a);
                         break;
                 }
                 break;
@@ -837,7 +851,8 @@
                 switch(opcodeL)
                 {
                     case 0x0://JR NC,r8
-                        JR_cond(!(af.bytes.f & 0b10000000));
+                        JR_cond(!(af.bytes.f & 0b00010000));
+                        break;
                     case 0x1://LD SP,d16
                         LD_d16(sp.bytes.s, sp.bytes.p);
                         break;
@@ -858,6 +873,7 @@
                         Bus->write(hl.hl, temp);
                         pc.pc+=1;
                         cycles+=12;
+                        break;
                     }
                     case 0x5://DEC (HL) (Z 1 H -)
                     {
@@ -1364,15 +1380,15 @@
                 switch(opcodeL)
                 {
                     case 0x0://RET NZ
-                        if(af.bytes.f &= 0b10000000)
+                        if(af.bytes.f & 0b10000000)
                         {
+                            pc.pc+=1;
+                            cycles+=8;
+                        } else {
                             pc.bytes.c = Bus->read(sp.sp);
                             pc.bytes.p = Bus->read(sp.sp+=1);
                             sp.sp+=1;
                             cycles+=20;
-                        } else {
-                            pc.pc+=1;
-                            cycles+=8;
                         }
                         break;
                     case 0x1://POP BC
@@ -1412,7 +1428,7 @@
                     case 0xa://JP Z,a16
                         JP_cond(af.bytes.f & 0b10000000);
                         break;
-                    case 0xb://PREFIX CB TODO LATER
+                    case 0xb://PREFIX CB
                         pc.pc+=1;
                         cycles+=4;
                         goto cb;
@@ -1450,8 +1466,8 @@
                     case 0x4://CALL NC,a16
                         CALL_cond(!(af.bytes.f & 0b00010000));
                         break;
-                    case 0x5://PUSH_ DE
-                        PUSH_16b(bc.bytes.b, bc.bytes.c);
+                    case 0x5://PUSH DE
+                        PUSH_16b(de.bytes.d, de.bytes.e);
                         break;
                     case 0x6://SUB d8 (Z 1 H C)
                         SUB(af.bytes.a, Bus->read(pc.pc+1));
@@ -1511,6 +1527,7 @@
                         break;
                     case 0x6://AND d8
                         AND(af.bytes.a, Bus->read(pc.pc+1));
+                        pc.pc+=1;
                         break;
                     case 0x7://RST 00h
                         RST(0x20);
@@ -1592,13 +1609,15 @@
                         cycles+=8;
                         break;
                     case 0xa://LD A,(a16)
-                        uint16_t a16;
+                    {
+                        uint16_t a16 = 0;
                         a16 |= Bus->read(pc.pc+1);//get low byte
                         a16 |= (Bus->read(pc.pc+2) << 8); // get high byte
                         af.bytes.a = Bus->read(a16);
                         pc.pc+=3;
                         cycles+=16;
                         break;
+                    }
                     case 0xb://EI
                         IME = true;
                         pc.pc+=1;
@@ -1625,6 +1644,13 @@
         }
 
         return; // stop executing to prevent from spilling into the CB instructions
+
+        //////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB
+        //////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB
+        //////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB
+        //////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB
+        //////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB
+        //////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB//////CB
 
         cb:
         opcode = Bus->read(pc.pc);//gets new opcode
@@ -2207,6 +2233,7 @@
                         RES(af.bytes.a, 0b00000010);
                         break;
                 }
+            break;
 
             case 0x9:
                 switch(opcodeL)
@@ -2270,6 +2297,7 @@
                         RES(af.bytes.a, 0b00001000);
                         break;
                 }
+            break;
 
             case 0xa:
                 switch(opcodeL)
@@ -2333,6 +2361,7 @@
                         RES(af.bytes.a, 0b00100000);
                         break;
                 }
+            break;
 
             case 0xb:
                 switch(opcodeL)
@@ -2396,6 +2425,7 @@
                         RES(af.bytes.a, 0b10000000);
                         break;
                 }
+            break;
 
             case 0xc:
                 switch(opcodeL)
@@ -2459,6 +2489,7 @@
                         SET(af.bytes.a, 0b00000010);
                         break;
                 }
+            break;
 
             case 0xd:
                 switch(opcodeL)
@@ -2522,6 +2553,7 @@
                         SET(af.bytes.a, 0b00001000);
                         break;
                 }
+            break;
 
             case 0xe:
                 switch(opcodeL)
@@ -2585,6 +2617,7 @@
                         SET(af.bytes.a, 0b00100000);
                         break;
                 }
+                break;
 
             case 0xf:
                 switch(opcodeL)
@@ -2648,7 +2681,7 @@
                         SET(af.bytes.a, 0b10000000);
                         break;
                 }
-                
+             
                 break;
         }
 

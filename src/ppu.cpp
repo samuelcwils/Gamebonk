@@ -68,7 +68,7 @@ void ppu::fetch()
 }
 
 int ppu::getColorID(int colorIndex) //returns a color ID for a given pixel
-{
+{    
     return (((regs.bytes.BGP & (0b00000011 << (colorIndex * 2))) >> (colorIndex * 2)));
 }
 
@@ -81,19 +81,19 @@ uint16_t ppu::getPixel()
     switch(colorID)
     {
         case 0:
-            return 0x27E0;
+            return 0x6c93; //white
             break;
 
         case 1:
-            return 0x15A0;
+            return 0x432e; //light gray
             break;
         
         case 2:
-            return 0x0B80;
+            return 0x2a0a; //dark gray
             break;
         
         case 3:
-            return 0x0160;
+            return 0x1105; //black
             break;
 
         default:
@@ -114,7 +114,7 @@ void ppu::tick()
         case OAM:
             if(ticks == 80){
                 fetcher.tileLine = (regs.bytes.LY + regs.bytes.SCY) % 8;
-                fetcher.tileRowAddr = 0x9800 + ( ((regs.bytes.LY + regs.bytes.SCY)/8) * 32);
+                fetcher.tileRowAddr = 0x9800 + ( ( (  ( (regs.bytes.LY + regs.bytes.SCY) % 256 )/8) ) * 32);
                 
                 for(int i = FIFO.size(); i > 0; i--) //clear FIFO from last line
                 {

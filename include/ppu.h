@@ -25,7 +25,7 @@ public:
 
     uint8_t oam[160];
 
-    uint16_t* frameBuffer;
+    uint16_t frameBuffer[160*144];
     bool frameDone;
 
     union{
@@ -53,12 +53,6 @@ public:
 
     void connectBus(bus* Bus);
 
-    void fetch();
-    
-    int getColorID(int colorIndex);
-
-    uint16_t getPixel();
-
     void tick();
 
     void drawTile(int x, int y, int index); //debug thing
@@ -66,6 +60,12 @@ public:
     void drawTiles(); //debug thing
 
 private:
+
+    void fetch();
+    
+    int getColorID(int colorIndex);
+
+    uint16_t getPixel();
     
     int xPos;
 

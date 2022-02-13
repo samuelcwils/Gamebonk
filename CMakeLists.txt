@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
 	src/cpu.cpp
 	src/ppu.cpp	
 	src/IO.cpp
+	src/MBC1.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})

@@ -18,8 +18,8 @@ cart::cart(uint8_t* rom, uint8_t* bootRom, uint32_t romSize)
     ramSize = ramSizeLookup[rom[0x149]];
     cartRam = new uint8_t[ramSize];
     ramBank = cartRam; //sets to bank 0 
+    romBankNum = 1;
 
-    variableBank = &rom[0x4000];
     ramBanking = false;
 
 
@@ -54,10 +54,6 @@ cart::cart(uint8_t* rom, uint8_t* bootRom, uint32_t romSize)
             break;
     }
 
-    staticBankLD();
-    variableBank = rom + 0x4000;
-    bootRomLoad();
-
 }
 
 void cart::printCart()
@@ -68,21 +64,6 @@ void cart::printCart()
     printf("The cart's ram size is: %d\n", ramSize);
 }
 
-void cart::staticBankLD()
-{
-    for(int i = 0; i < 0x4000; i++)
-    {
-        staticBank[i] = rom[i];
-    }
-}
-
-void cart::bootRomLoad()
-{
-    for(int i = 0; i < 256; i++)
-    {
-        staticBank[i] = bootRom[i];
-    }
-}
 
 void cart::writeRom(uint16_t address, uint8_t value)
 {

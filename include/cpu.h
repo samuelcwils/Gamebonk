@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "bus.h"
 
 class bus;
@@ -9,7 +11,8 @@ private:
     bus* Bus; 
 
     void emulateCycles();
-    void Zflag(uint16_t a, int b); 
+    void Zflag(uint8_t a, uint8_t b); 
+    void Zflag_sub(uint16_t a, int b); 
     void Hflag(uint8_t a, uint8_t b); 
     void Hflag(uint16_t a, uint16_t b); 
     void Hflag_sub(uint8_t a, uint8_t b);
@@ -109,7 +112,6 @@ private:
         uint16_t sp;
     } sp; //register sp
     
-
 public:
     
     union {
@@ -122,15 +124,28 @@ public:
 
     bool debug = 0;
     bool bootRomDone;
+
+    uint8_t DIV;
+    uint8_t TIMA; //FF05
+    uint8_t TMA; //FF06
+    uint8_t TAC; //FF07
+    int TIMA_speed;
+    uint16_t totalTicks_DIV;
+    uint16_t totalTicks_TIMA;
     
+    FILE* fp;
     bool IME;
+    bool IMEdelay;
     uint8_t IE;
     uint8_t IF;
 
-    uint8_t cycles; //counts up cycles then emulates speed
+    uint8_t opcode;
+    int cycles; //counts up cycles then emulates speed
+    
 
     cpu(bus* Bus);
     void checkInterrupts();
+    void updateTimers(int ticks);
     void execOP();
 
 };

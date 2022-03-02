@@ -15,7 +15,6 @@ private:
     uint8_t hRam[126];
 
     uint8_t serial[2];
-    uint8_t joypad;
 
     struct 
     {
@@ -29,5 +28,11 @@ public:
     void connectCPU(cpu* CPU);
     void write(uint16_t address, uint8_t byte);
     uint8_t read(uint16_t address);
+    void interruptFlags(uint8_t flag); //ORs input flags with IF register
+
+    uint8_t joypad;
+    uint8_t joypad_state;
+    int busTicks; //tick other systems after CPU read
+    bool busTickEnable; //don't ticker other systems when not being read by the CPU
 };
 

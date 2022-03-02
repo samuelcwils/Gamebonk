@@ -11,7 +11,6 @@
             } else {
                 romBankNum &= 0b01100000;
                 romBankNum |= ( (value & 0b00011111) & (bankBits) ); 
-                variableBank += (0x4000 * romBankNum);
             } 
 
         } else if(address <= 0x5fff) // Ram bank num / upper 2 bits of ROM
@@ -24,7 +23,6 @@
             } else if(romSize >= 0x100000)
             {
                 romBankNum |= (value << 5);
-                variableBank += (0x4000 * romBankNum);
             }
 
         } else if(address <= 0x7fff) //rank banking register

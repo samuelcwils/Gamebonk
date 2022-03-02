@@ -3,7 +3,9 @@
 #include <array>
 #include <iostream>
 #include "cpu.h"
+#include "bus.h"
 
+class bus;
 class IO
 {
 	private:
@@ -13,8 +15,7 @@ class IO
 		int gw; //game screen width
 		int gh; //game screen
 
-		uint8_t interrupts;
-		uint8_t joypad;
+		bus* Bus;
 
 		SDL_Window* window;
 		SDL_Renderer* renderer;
@@ -24,7 +25,7 @@ class IO
 		uint16_t* SrcBuffer;
 
 	public:
-		IO(uint8_t interrupts, uint16_t* framebuffer);
+		IO(bus* Bus, uint16_t* framebuffer);
 		~IO();
 
 		void createWindow(int input_w, int input_h, int input_gw, int input_gh);

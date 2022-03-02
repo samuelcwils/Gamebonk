@@ -1,8 +1,8 @@
 #include "IO.h"
 
-IO::IO(uint8_t interrupts, uint16_t* framebuffer)
+IO::IO(bus* Bus, uint16_t* framebuffer)
 {
-	this->interrupts = interrupts;
+	this->Bus = Bus;
 	SrcBuffer = framebuffer;
 }
 
@@ -60,25 +60,101 @@ void IO::keyInput()
 					break;
 
 				case SDL_KEYDOWN:
-				switch (event.key.keysym.sym)
-					{
-						case SDLK_ESCAPE:
-							SDL_DestroyWindow(window);
-							SDL_DestroyRenderer(renderer);
-							SDL_DestroyTexture(gameScreen);
-							SDL_Quit();
-							exit(0);
-							break;
+					switch (event.key.keysym.sym)
+						{
+							case SDLK_ESCAPE:
+								SDL_DestroyWindow(window);
+								SDL_DestroyRenderer(renderer);
+								SDL_DestroyTexture(gameScreen);
+								SDL_Quit();
+								exit(0);
+								break;
 
-						case SDLK_z:
-							//interrupts[4] = 1;
-							break;
-						
-					}
+							case SDLK_LSHIFT: //start
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b01111111;
+								break;
+							
+							case SDLK_LCTRL: //select
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b10111111;
+								break;
+							
+							case SDLK_z: //a
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b11101111;
+								break;
 
-				break;
+							case SDLK_x: //b
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b11011111;
+								break;
 
+							case SDLK_UP:
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b11111011;
+								break;
+							
+							case SDLK_DOWN:
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b11110111;
+								break;
+							
+							case SDLK_LEFT:
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b11111101;
+								break;
+
+							case SDLK_RIGHT:
+								Bus->interruptFlags(0b00010000);
+								Bus->joypad_state &= 0b11111110;
+								break;
+						}
+					break;
+				
 				case SDL_KEYUP:
+					switch (event.key.keysym.sym)
+						{
+							case SDLK_ESCAPE:
+								SDL_DestroyWindow(window);
+								SDL_DestroyRenderer(renderer);
+								SDL_DestroyTexture(gameScreen);
+								SDL_Quit();
+								exit(0);
+								break;
+
+							case SDLK_LSHIFT: //start
+								Bus->joypad_state |= 0b10000000;
+								break;
+							
+							case SDLK_LCTRL: //select
+								Bus->joypad_state |= 0b01000000;
+								break;
+							
+							case SDLK_z: //a
+								Bus->joypad_state |= 0b00010000;
+								break;
+
+							case SDLK_x: //b
+								Bus->joypad_state |= 0b00100000;
+								break;
+
+							case SDLK_UP:
+								Bus->joypad_state |= 0b00000100;
+								break;
+							
+							case SDLK_DOWN:
+								Bus->joypad_state |= 0b00001000;
+								break;
+							
+							case SDLK_LEFT:
+								Bus->joypad_state |= 0b00000010;
+								break;
+
+							case SDLK_RIGHT:
+								Bus->joypad_state |= 0b00000001;
+								break;
+						}
 					break;
 
 			}

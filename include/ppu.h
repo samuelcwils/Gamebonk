@@ -31,6 +31,7 @@ public:
     bool frameDone;
     bool OAM_access;
     bool VRAM_access;
+    bool disableFlag;
 
     union{
         struct {

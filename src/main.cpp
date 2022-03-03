@@ -34,49 +34,16 @@ int main()
 
     cartridge->printCart();
 
-//////////////////////////////////////////////////////////////////////////////
-//rest of ROM //rest of ROM //rest of ROM //rest of ROM //rest of ROM
-//  
-
-while(true)
-{
-        if(!(PPU->regs.bytes.LCDC & 0b10000000)) //doesn't tick ppu while not enabled
-        {
-            CPU->checkInterrupts();
-            CPU->execOP();
-
-            while(CPU->cycles > 0)
-            {         
-                CPU->updateTimers(1);
-                CPU->cycles--;
-            }
-
-            totalInstructions++;
-
-            if(totalInstructions % 100)
+    while(true)
+    {
+            if(!(PPU->regs.bytes.LCDC & 0b10000000)) //doesn't tick ppu while not enabled
             {
-                totalInstructions = 0;
-                io->keyInput();
-            }
-       
-        } else {
-            
-            auto start = high_resolution_clock::now(); 
-
-           // PPU->regs.bytes.STAT |= 0b00000010; //Gets ppu ready to oam
-            
-            while(PPU->frameDone == false) //stops after every frame
-            {
-                
                 CPU->checkInterrupts();
                 CPU->execOP();
-                
-                while(CPU->cycles > 0)
-                {
-                    PPU->tick();
 
+                while(CPU->cycles > 0)
+                {         
                     CPU->updateTimers(1);
-                    
                     CPU->cycles--;
                 }
 
@@ -87,29 +54,55 @@ while(true)
                     totalInstructions = 0;
                     io->keyInput();
                 }
+        
+            } else {
+                
+                auto start = high_resolution_clock::now(); 
 
+            // PPU->regs.bytes.STAT |= 0b00000010; //Gets ppu ready to oam
+                
+                while(PPU->frameDone == false) //stops after every frame
+                {
+                    
+                    CPU->checkInterrupts();
+                    CPU->execOP();
+                    
+                    while(CPU->cycles > 0)
+                    {
+                        PPU->tick();
+
+                        CPU->updateTimers(1);
+                        
+                        CPU->cycles--;
+                    }
+
+                    totalInstructions++;
+
+                    if(totalInstructions % 100)
+                    {
+                        totalInstructions = 0;
+                        io->keyInput();
+                    }
+
+                }
+
+                io->updateDisplay();
+
+                auto stop = high_resolution_clock::now(); 
+                auto waitTime = std::chrono::duration_cast<microseconds>(stop - start);
+
+                frameDone = true;
+                
+            // std::cout << waitTime.count() << std::endl;
+
+                std::this_thread::sleep_for(16666us - waitTime);
+
+                PPU->frameDone = false;
+                
+                frames++;
             }
 
-            io->updateDisplay();
-
-            auto stop = high_resolution_clock::now(); 
-            auto waitTime = std::chrono::duration_cast<microseconds>(stop - start);
-
-            frameDone = true;
-            
-           // std::cout << waitTime.count() << std::endl;
-
-            std::this_thread::sleep_for(16666us - waitTime);
-
-            PPU->frameDone = false;
-            
-            frames++;
-        }
-
-}
-
-    //rest of ROM //rest of ROM //rest of ROM //rest of ROM //rest of ROM
-    //////////////////////////////////////////////////////////////////////////////
+    }
 
     return 0;   
 }

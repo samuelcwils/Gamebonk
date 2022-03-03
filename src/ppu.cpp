@@ -334,6 +334,7 @@ void ppu::tick()
         case vBlank:
             VRAM_access = true;
             OAM_access = true;
+            
             if(ticks == 456)
             {
                 ticks = 0; 

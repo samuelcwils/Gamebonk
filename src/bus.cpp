@@ -135,11 +135,12 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address <= 0x9fff){
 
-        if(true)
+        if(memoryMap.PPU->VRAM_access)
         {
             return memoryMap.PPU->vRam.vRam[address - 0x8000];
         } else {
-            return 0xff;
+            return memoryMap.PPU->vRam.vRam[address - 0x8000];
+            //return 0xff;
         }
 
     } else if(address <= 0xbfff){
@@ -156,11 +157,12 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address <= 0xfe9f){
 
-        if(true)
+        if(memoryMap.PPU->OAM_access)
         {
             return memoryMap.PPU->oam[address - 0xee00];
         } else {
-            return 0xff;
+            return memoryMap.PPU->oam[address - 0xee00];
+            //return 0xff;
         }
         
 
@@ -208,6 +210,17 @@ uint8_t bus::read(uint16_t address)
       
     } else if(address <= 0xff4b){
 
+        if(address == 0xff41)
+        {
+            if(!(memoryMap.PPU->regs.bytes.LCDC & 0b10000000))
+            {
+                return (memoryMap.PPU->regs.regs[(address - 0xff41)]) & 0b11111100;
+            } else {
+                return memoryMap.PPU->regs.bytes.STAT;
+            }
+
+           int x = 5 + 5;
+        }
         return memoryMap.PPU->regs.regs[(address - 0xff40)];
 
     } else if(address <= 0xfffe){

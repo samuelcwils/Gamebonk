@@ -25,6 +25,7 @@
                 {
                     if(IF & (0b00000001))
                     {
+                        servicingInterrupt = true;
                         IF &= 0b11111110;
                         IME = false;
                         
@@ -44,6 +45,7 @@
                 {
                     if(IF & (0b00000010))
                     {
+                        servicingInterrupt = true;
                         IF &= 0b11111101;
                         IME = false;
                         
@@ -63,6 +65,7 @@
                 {
                     if(IF & (0b00000100))
                     {
+                        servicingInterrupt = true;
                         IF &= 0b11111011;
                         IME = false;
                         
@@ -81,6 +84,7 @@
                 {
                     if(IF & (0b00001000))
                     {
+                        servicingInterrupt = true;
                         IF &= 0b11101111;
                         IME = false;
                         sp.sp--;
@@ -98,6 +102,7 @@
                 {
                     if(IF & (0b00010000))
                     {
+                        servicingInterrupt = true;
                         IF &= 0b11101111;
                         IME = false;
                         

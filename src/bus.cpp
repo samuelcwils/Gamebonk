@@ -41,7 +41,7 @@ void bus::write(uint16_t address, uint8_t byte)
 
     } else if(address <= 0xfe9f){
 
-        if(memoryMap.PPU->VRAM_access)
+        if(memoryMap.PPU->OAM_access)
         {
             memoryMap.PPU->oam[address - 0xee00] = byte;
         }
@@ -90,15 +90,16 @@ void bus::write(uint16_t address, uint8_t byte)
     } else if(address == 0xff0f){
 
         memoryMap.CPU->IF = byte;
+
     
-    } else if(address <= 0xff4b){
+    } else if(address >= 0xff40 && address <= 0xff4b){
 
         if(address == 0xff46)
         {
             memoryMap.PPU->DMA(((uint16_t)byte) << 8);
         }
 
-        memoryMap.PPU->regs.regs[(address - 0xff40)] = byte; //TODO need IO
+        memoryMap.PPU->regs.regs[(address - 0xff40)] = byte;
 
     } else if(address <= 0xfffe){
 
@@ -135,12 +136,11 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address <= 0x9fff){
 
-        if(memoryMap.PPU->VRAM_access)
+        if(memoryMap.PPU->VRAM_access || (PPU_read))
         {
             return memoryMap.PPU->vRam.vRam[address - 0x8000];
         } else {
-            return memoryMap.PPU->vRam.vRam[address - 0x8000];
-            //return 0xff;
+            return 0xff;
         }
 
     } else if(address <= 0xbfff){
@@ -157,15 +157,13 @@ uint8_t bus::read(uint16_t address)
 
     } else if(address <= 0xfe9f){
 
-        if(memoryMap.PPU->OAM_access)
+        if(memoryMap.PPU->OAM_access || (PPU_read))
         {
             return memoryMap.PPU->oam[address - 0xee00];
         } else {
-            return memoryMap.PPU->oam[address - 0xee00];
-            //return 0xff;
+            return 0xff;
         }
         
-
     } else if(address == 0xff00){
 
         joypad &= 0xf0;
@@ -208,7 +206,7 @@ uint8_t bus::read(uint16_t address)
 
         return memoryMap.CPU->IF;
       
-    } else if(address <= 0xff4b){
+    } else if(address >= 0xff40 && address <= 0xff4b){
 
         if(address == 0xff41)
         {
@@ -221,6 +219,7 @@ uint8_t bus::read(uint16_t address)
 
            int x = 5 + 5;
         }
+
         return memoryMap.PPU->regs.regs[(address - 0xff40)];
 
     } else if(address <= 0xfffe){
@@ -238,5 +237,9 @@ uint8_t bus::read(uint16_t address)
 
 void bus::interruptFlags(uint8_t flag)
 {
-    memoryMap.CPU->IF |= flag;
+    if(!(memoryMap.CPU->servicingInterrupt) && flag != 2)
+    {
+        memoryMap.CPU->IF |= flag;
+    }
+    
 }

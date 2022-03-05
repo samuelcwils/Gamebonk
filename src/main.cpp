@@ -63,9 +63,8 @@ int main()
                 
                 while(PPU->frameDone == false) //stops after every frame
                 {
-                    
-                    CPU->checkInterrupts();
                     CPU->execOP();
+                    CPU->checkInterrupts();
                     
                     while(CPU->cycles > 0)
                     {
@@ -95,7 +94,12 @@ int main()
                 
             // std::cout << waitTime.count() << std::endl;
 
-                std::this_thread::sleep_for(16666us - waitTime);
+                if(waitTime < 16666us)
+                {
+                    std::this_thread::sleep_for(16666us - waitTime);
+                }
+
+                
 
                 PPU->frameDone = false;
                 

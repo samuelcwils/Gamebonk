@@ -695,7 +695,7 @@
         af.bytes.f |= 0b00100000;  
 
         pc.pc+=1;
-            }
+        }
 
     void cpu::RES(uint8_t &byte, uint8_t bitNum)
     {
@@ -728,7 +728,7 @@
            // debug = true;
         }
 
-        if(pc.pc == 0x1e7e) //0x028c
+        if(pc.pc == 0x1e82) //0x028c
         {
             // bootRomDone = true;
             //debug = true;
@@ -1230,7 +1230,16 @@
                         LD_HL_REG(hl.bytes.l);
                         break;
                     case 0x6://HALT
-                        pc.pc+=1;
+                        for(int i = 0; i <= 4; i++)
+                        {
+                            if(((IE & (0b00000001 << i))) && (IF & (0b00000001 << i)))
+                            {
+                                pc.pc+=1;
+                                return;
+                            } else {
+                                cycles = 4;
+                            }
+                        }    
                         break;
                     case 0x7://LD (HL),A
                         LD_HL_REG(af.bytes.a);
@@ -1583,6 +1592,7 @@
                         RET_cond(af.bytes.f & 0b00010000);
                         break;
                     case 0x9://RETI
+                        servicingInterrupt = false;
                         IME = true;
                         RET();
                         break;

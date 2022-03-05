@@ -18,6 +18,7 @@ void ppu::DMA(uint16_t nn)
     {
         oam[i] = Bus->read(nn + i);
     }
+
 }
 
 uint8_t ppu::reverseBits(uint8_t n)
@@ -170,18 +171,19 @@ void ppu::fetcherDrawSprite()
 void ppu::fetcherPush()
 {
     int fifoSize = FIFO.size();
-            if(fifoSize == 8 || fifoSize == 0){ 
+        if(fifoSize == 8 || fifoSize == 0){ 
 
-                fetcherDrawSprite();
+            fetcherDrawSprite();
 
-                for(int i = 0; i < 8; i++){
-                    FIFO.push(fetcher.fullLine[i]);
-                }
-                fetcher.state = getTile;
-                fetcher.tileCollumn++;
-            } else {
-                fetcher.state = idle;
+            for(int i = 0; i < 8; i++){
+                FIFO.push(fetcher.fullLine[i]);
             }
+            
+            fetcher.state = getTile;
+            fetcher.tileCollumn++;
+        } else {
+            fetcher.state = idle;
+        }
 }
 
 int ppu::getColorID(int colorIndex) //returns a color ID for a given pixel
@@ -191,8 +193,6 @@ int ppu::getColorID(int colorIndex) //returns a color ID for a given pixel
 
 uint16_t ppu::getPixel()
 {
-    int fifoSize = FIFO.size();
-    int fifoFront = FIFO.front();
     int colorID = getColorID(FIFO.front());
  
     switch(colorID)
@@ -222,18 +222,10 @@ uint16_t ppu::getPixel()
 
 void ppu::tick()
 {
+    Bus->PPU_read = true;
 
     statusMode = regs.bytes.STAT & 0b00000011;
 
-    if(regs.bytes.LY == regs.bytes.LYC)
-    {
-        regs.bytes.STAT |= 0b00000100;
-        Bus->interruptFlags(0b00000010);
-        
-    } else 
-    {
-        regs.bytes.STAT &= 0b11111011;
-    }
 
     switch(statusMode)
     {
@@ -247,6 +239,13 @@ void ppu::tick()
                     fetcher.BG_mapBase = 0x9800;
                 }
 
+                if(regs.bytes.LCDC & 0b01000000)
+                {
+                    fetcher.WIN_mapBase = 0x9c00;
+                } else {
+                    fetcher.WIN_mapBase = 0x9800;
+                }
+
                 fetcher.tileLine = (regs.bytes.LY + regs.bytes.SCY) % 8;
                 fetcher.tileRowAddr = fetcher.BG_mapBase + ( ( (  ( (regs.bytes.LY + regs.bytes.SCY) % 256 )/8) ) * 32);
                 
@@ -255,6 +254,7 @@ void ppu::tick()
                     FIFO.pop();
                 }
 
+                scrollingLeft = regs.bytes.SCX;
                 fetcher.state = 0;
                 fetcher.tileCollumn = 0;
                 OAM_access = true;
@@ -264,16 +264,26 @@ void ppu::tick()
             break;
         
         case Transfer:
+        {
             if(ticks % 2)
             {
                 fetch();
             }
             
-
             VRAM_access = false;
             OAM_access = false;
 
-            if((FIFO.size() > 8)){
+            if((FIFO.size() > 8))
+            {
+                int fifoSize = FIFO.size();
+                int amountScrolled = 0;
+                while(scrollingLeft > 0 && ((fifoSize - amountScrolled) > 8))
+                {
+                    FIFO.pop();
+                    scrollingLeft--;
+                    amountScrolled++;
+                }
+
                 frameBuffer[(regs.bytes.LY * 160) + xPos] = getPixel();
                 FIFO.pop();
                 xPos++;
@@ -282,7 +292,7 @@ void ppu::tick()
                 {
                     if(xPos == regs.bytes.WX)
                     {
-                        for(int i = 0; i < FIFO.size(); i++)
+                        for(int i = FIFO.size(); i > 0; i--)
                         {
                             FIFO.pop();
                         }
@@ -297,13 +307,14 @@ void ppu::tick()
                 ticks+=2;
                 regs.bytes.STAT &= 0b11111100;
                 regs.bytes.STAT |= hBlank;
+                regs.bytes.STAT &= 0b00000111;
                 regs.bytes.STAT |= 0b00001000; //interrupt source
                 Bus->interruptFlags(0b00000010);
                 VRAM_access = true;
                 OAM_access = true;
             }
             break;
-       
+        }
         case hBlank:
             VRAM_access = true;
             OAM_access = true;
@@ -318,17 +329,19 @@ void ppu::tick()
                     
                     regs.bytes.STAT &= 0b11111100;
                     regs.bytes.STAT |= vBlank;
+                    regs.bytes.STAT &= 0b00000111;
                     regs.bytes.STAT |= 0b00010000; //interrupt source
                     Bus->interruptFlags(0b00000010);
                 
                 } else {
-                        regs.bytes.STAT &= 0b11111100;
-                        regs.bytes.STAT |= OAM;
-                        regs.bytes.STAT |= 0b00100000; //interrupt source
-                        Bus->interruptFlags(0b00000010);
+                    regs.bytes.STAT &= 0b11111100;
+                    regs.bytes.STAT |= OAM;
+                    regs.bytes.STAT &= 0b00000111;
+                    regs.bytes.STAT |= 0b00100000; //interrupt source
+                    Bus->interruptFlags(0b00000010);
                 }
 
-            }
+            }   
             break;
         
         case vBlank:
@@ -346,6 +359,7 @@ void ppu::tick()
                     
                     regs.bytes.STAT &= 0b11111100;
                     regs.bytes.STAT |= OAM;
+                    regs.bytes.STAT &= 0b00000111;
                     regs.bytes.STAT |= 0b00100000; //interrupt source
                     Bus->interruptFlags(0b00000010);
                     
@@ -357,6 +371,31 @@ void ppu::tick()
     }
 
     ticks++; 
+
+    if(regs.bytes.LY == regs.bytes.LYC)
+    {
+        regs.bytes.STAT &= 0b00000011;
+        regs.bytes.STAT |= 0b01000100;
+        Bus->interruptFlags(0b00000010);
+        
+    } else 
+    {
+        regs.bytes.STAT &= 0b11111011;
+    }
+
+}
+
+void ppu::reset()
+{
+    regs.bytes.LY = 0;
+    regs.bytes.STAT = OAM;
+    VRAM_access = true;
+    OAM_access = true;
+
+    for(int i = 0; i < FIFO.size(); i++)
+    {
+        FIFO.pop();
+    }
 
 }
 
@@ -410,7 +449,7 @@ void ppu::drawTile(int x, int y, int index)
         
     }
 
-    
+    Bus->PPU_read = false;
 }
 
 void ppu::drawTiles()

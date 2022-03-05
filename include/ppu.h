@@ -54,6 +54,8 @@ public:
 
     ppu();
 
+    void reset();
+
     void connectBus(bus* Bus);
 
     void DMA(uint16_t nn);
@@ -116,7 +118,7 @@ private:
         uint8_t tileCollumn;
     } fetcher;
 
-    
+    int scrollingLeft;
     uint8_t statusMode;
     int ticks;
     bus* Bus;

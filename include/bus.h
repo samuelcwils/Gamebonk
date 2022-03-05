@@ -34,5 +34,6 @@ public:
     uint8_t joypad_state;
     int busTicks; //tick other systems after CPU read
     bool busTickEnable; //don't ticker other systems when not being read by the CPU
+    bool PPU_read;
 };
 

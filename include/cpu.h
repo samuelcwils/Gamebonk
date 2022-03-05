@@ -122,7 +122,7 @@ public:
         uint16_t pc;
     } pc; //register pc 
 
-    bool debug = 0;
+    bool debug = false;
     bool bootRomDone;
 
     uint8_t DIV;
@@ -138,6 +138,7 @@ public:
     bool IMEdelay;
     uint8_t IE;
     uint8_t IF;
+    bool servicingInterrupt;
 
     uint8_t opcode;
     int cycles; //counts up cycles then emulates speed

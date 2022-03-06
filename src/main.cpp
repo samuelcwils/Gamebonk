@@ -49,7 +49,7 @@ int main()
 
                 totalInstructions++;
 
-                if(totalInstructions % 100)
+                if(!(totalInstructions % 10000))
                 {
                     totalInstructions = 0;
                     io->keyInput();
@@ -77,7 +77,7 @@ int main()
 
                     totalInstructions++;
 
-                    if(totalInstructions % 100)
+                    if(!(totalInstructions % 10000))
                     {
                         totalInstructions = 0;
                         io->keyInput();
@@ -92,7 +92,7 @@ int main()
 
                 frameDone = true;
                 
-            // std::cout << waitTime.count() << std::endl;
+             std::cout << waitTime.count() << std::endl;
 
                 if(waitTime < 16666us)
                 {

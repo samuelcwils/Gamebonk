@@ -728,13 +728,15 @@
            // debug = true;
         }
 
-        if(pc.pc == 0x1e82) //0x028c
+        if((pc.pc == 0x00a5) && bootRomDone) //0x028c
         {
             // bootRomDone = true;
-            //debug = true;
+           // debug = true;
             int x = 5;
             int y = 4;
             x += y;
+        } else {
+            debug = false;
         }
 
         if(debug)

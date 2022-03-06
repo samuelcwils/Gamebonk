@@ -194,30 +194,8 @@ int ppu::getColorID(int colorIndex) //returns a color ID for a given pixel
 uint16_t ppu::getPixel()
 {
     int colorID = getColorID(FIFO.front());
- 
-    switch(colorID)
-    {
-        case 0:
-            return 0x6c93; //white
-            break;
-
-        case 1:
-            return 0x432e; //light gray
-            break;
-        
-        case 2:
-            return 0x2a0a; //dark gray
-            break;
-        
-        case 3:
-            return 0x1105; //black
-            break;
-
-        default:
-            return 0;
-            break;
-    }
-
+    uint16_t lookup[] = {0x6c93, 0x432e, 0x2a0a, 0x1105};
+    return lookup[colorID];
 }
 
 void ppu::tick()
@@ -225,7 +203,6 @@ void ppu::tick()
     Bus->PPU_read = true;
 
     statusMode = regs.bytes.STAT & 0b00000011;
-
 
     switch(statusMode)
     {
@@ -276,17 +253,24 @@ void ppu::tick()
             if((FIFO.size() > 8))
             {
                 int fifoSize = FIFO.size();
-                int amountScrolled = 0;
-                while(scrollingLeft > 0 && ((fifoSize - amountScrolled) > 8))
+                if(scrollingLeft)
                 {
+                    int amountScrolled = 0;
+                    while(scrollingLeft > 0 && ((fifoSize - amountScrolled) > 8))
+                    {
+                        FIFO.pop();
+                        fifoSize = FIFO.size();
+                        scrollingLeft--;
+                        amountScrolled++;
+                    }
+                } else {
+                    fifoSize = FIFO.size();
+                    frameBuffer[(regs.bytes.LY * 160) + xPos] = getPixel();
                     FIFO.pop();
-                    scrollingLeft--;
-                    amountScrolled++;
+                    xPos++;
                 }
 
-                frameBuffer[(regs.bytes.LY * 160) + xPos] = getPixel();
-                FIFO.pop();
-                xPos++;
+
 
                 if(regs.bytes.WY == regs.bytes.LY)
                 {

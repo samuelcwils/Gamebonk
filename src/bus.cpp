@@ -237,7 +237,7 @@ uint8_t bus::read(uint16_t address)
 
 void bus::interruptFlags(uint8_t flag)
 {
-    if(!(memoryMap.CPU->servicingInterrupt) && flag != 2)
+    if(!((memoryMap.CPU->servicingInterrupt) && flag == 2))
     {
         memoryMap.CPU->IF |= flag;
     }
